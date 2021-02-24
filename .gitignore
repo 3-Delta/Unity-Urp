@@ -1,0 +1,7 @@
+/urp/*/*.csproj
+/urp/*/*.sln
+/urp/*/*.vs
+/urp/*/Library
+/urp/*/obj
+/urp/*/Temp
+/urp/*/Logs
