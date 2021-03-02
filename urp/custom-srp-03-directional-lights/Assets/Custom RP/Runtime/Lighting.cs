@@ -52,8 +52,13 @@ public class Lighting {
 		buffer.SetGlobalVectorArray(dirLightDirectionsId, dirLightDirections);
 	}
 
+	// 设置平行光颜色/方向
 	void SetupDirectionalLight (int index, ref VisibleLight visibleLight) {
 		dirLightColors[index] = visibleLight.finalColor;
+
+		// https://zhuanlan.zhihu.com/p/163360207
+		// localspace的光源的forward方向
+		// 方向：远离光源的方向，所以是负数
 		dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
 	}
 }
