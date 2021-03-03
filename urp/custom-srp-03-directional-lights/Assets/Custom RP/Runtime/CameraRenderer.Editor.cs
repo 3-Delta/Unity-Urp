@@ -45,6 +45,7 @@ partial class CameraRenderer {
 		) {
 			overrideMaterial = errorMaterial
 		};
+		// 因为只支持unlit shader类型的shader pass, 所以其他类型关键字的shader pass 全部 当作错误情况渲染
 		for (int i = 1; i < legacyShaderTagIds.Length; i++) {
 			drawingSettings.SetShaderPassName(i, legacyShaderTagIds[i]);
 		}

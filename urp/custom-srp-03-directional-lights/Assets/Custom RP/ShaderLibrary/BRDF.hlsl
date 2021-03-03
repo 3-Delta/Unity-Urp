@@ -11,19 +11,24 @@ struct BRDF {
 
 float OneMinusReflectivity (float metallic) {
 	float range = 1.0 - MIN_REFLECTIVITY;
+	// range * (1 - metallic)
 	return range - metallic * range;
 }
 
 BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	BRDF brdf;
+	// 1 - 金属度 = 漫反射度
 	float oneMinusReflectivity = OneMinusReflectivity(surface.metallic);
 
+	// 处理surface漫反射
 	brdf.diffuse = surface.color * oneMinusReflectivity;
 	if (applyAlphaToDiffuse) {
 		brdf.diffuse *= surface.alpha;
 	}
+	
 	brdf.specular = lerp(MIN_REFLECTIVITY, surface.color, surface.metallic);
 
+	// ？？？
 	float perceptualRoughness =
 		PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
 	brdf.roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
@@ -40,8 +45,10 @@ float SpecularStrength (Surface surface, BRDF brdf, Light light) {
 	return r2 / (d2 * max(0.1, lh2) * normalization);
 }
 
+// 处理surface, brdf, 以及光源的关系
 float3 DirectBRDF (Surface surface, BRDF brdf, Light light) {
-	return SpecularStrength(surface, brdf, light) * brdf.specular + brdf.diffuse;
+	float strength = SpecularStrength(surface, brdf, light);
+	return strength * brdf.specular + brdf.diffuse;
 }
 
 #endif

@@ -6,6 +6,11 @@ public partial class CameraRenderer {
 	const string bufferName = "Render Camera";
 
 	static ShaderTagId
+		// https://catlikecoding.com/unity/tutorials/custom-srp/custom-render-pipeline/
+		// we also have to indicate which kind of shader passes are allowed. As we only support unlit shaders in this tutorial we have to fetch the shader tag ID for the SRPDefaultUnlit pass
+		// 因为我们需要渲染出来物体，所以就需要告知gpu哪些物体需要渲染：cullresult中会有物体列表
+		// 同时哪种渲染方式：也就是 哪种类型的shader pass被使用
+		// 因为只支持unlit shader, 所以也就是支持  SRPDefaultUnlit 类型的shader pass
 		unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
 		litShaderTagId = new ShaderTagId("CustomLit");
 

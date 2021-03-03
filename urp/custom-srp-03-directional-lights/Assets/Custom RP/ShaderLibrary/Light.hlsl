@@ -9,9 +9,19 @@ CBUFFER_START(_CustomLight)
 	float4 _DirectionalLightDirections[MAX_DIRECTIONAL_LIGHT_COUNT];
 CBUFFER_END
 
+/*
+ * 相当于：
+	cbuffer _CustomLight
+	{
+		int _DirectionalLightCount;
+		float4 _DirectionalLightColors[MAX_DIRECTIONAL_LIGHT_COUNT];
+		float4 _DirectionalLightDirections[MAX_DIRECTIONAL_LIGHT_COUNT];
+	}
+ */
+
 struct Light {
-	float3 color;
-	float3 direction;
+	float3 color; // 光源颜色
+	float3 direction; // 光源方向， 指向光源，而不是从光源出发
 };
 
 int GetDirectionalLightCount () {

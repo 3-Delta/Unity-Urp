@@ -47,6 +47,7 @@ public class Lighting {
 			}
 		}
 
+		// 传递 平行光光源数据
 		buffer.SetGlobalInt(dirLightCountId, dirLightCount);
 		buffer.SetGlobalVectorArray(dirLightColorsId, dirLightColors);
 		buffer.SetGlobalVectorArray(dirLightDirectionsId, dirLightDirections);
