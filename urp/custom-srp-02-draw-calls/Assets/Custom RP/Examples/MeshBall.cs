@@ -37,6 +37,7 @@ public class MeshBall : MonoBehaviour {
 			block = new MaterialPropertyBlock();
 			block.SetVectorArray(baseColorId, baseColors);
 		}
+		// 需要用block,否则都是用最后一次的mat属性绘制
 		Graphics.DrawMeshInstanced(mesh, 0, material, matrices, 1023, block);
 	}
 }
