@@ -3,11 +3,11 @@
 
 struct Surface {
 	float3 normal; // 法线
-	
-	float3 viewDirection; // 顶点指向相机方向
-	
+
 	float3 color; // 颜色
 	float alpha; // 透明度
+	
+	float3 viewDirection; // 顶点指向相机方向， 光源方向正好相反
 	
 	float metallic; // 金属度
 	float smoothness; // 光滑度

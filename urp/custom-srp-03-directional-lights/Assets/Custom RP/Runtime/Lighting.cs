@@ -54,7 +54,14 @@ public class Lighting {
 	}
 
 	// 设置平行光颜色/方向
+	// 默认情况下Unity不会将其转换为线性空间。我们必须将GraphicsSettings.lightsUseLinearIntensity设置为true
 	void SetupDirectionalLight (int index, ref VisibleLight visibleLight) {
+		// RenderSettings.sun 是主光源
+		// Light light = default;
+		// finalColor是强度*乘过的
+		// visibleLight.finalColor == light.intensity * light.color.linear;
+
+		// 颜色是linearspace下的颜色
 		dirLightColors[index] = visibleLight.finalColor;
 
 		// https://zhuanlan.zhihu.com/p/163360207

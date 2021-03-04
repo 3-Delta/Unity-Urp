@@ -51,4 +51,6 @@ float3 DirectBRDF (Surface surface, BRDF brdf, Light light) {
 	return strength * brdf.specular + brdf.diffuse;
 }
 
+// diffuse: Sc * Lc * sature(n dot l);
+
 #endif
