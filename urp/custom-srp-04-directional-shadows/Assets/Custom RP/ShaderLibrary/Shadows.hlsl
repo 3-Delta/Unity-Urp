@@ -17,16 +17,22 @@
 #define MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT 4
 #define MAX_CASCADE_COUNT 4
 
+/* 一般是：
+	TEXTURE2D(_DirectionalShadowAtlas);
+	SAMPLER(sampler_DirectionalShadowAtlas);
+*/
+// shadowmap的定义 以及 采样器 需要特殊处理
 TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 #define SHADOW_SAMPLER sampler_linear_clamp_compare
 SAMPLER_CMP(SHADOW_SAMPLER);
 
 CBUFFER_START(_CustomShadows)
+	// 级联数
 	int _CascadeCount;
 	float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
 	float4 _CascadeData[MAX_CASCADE_COUNT];
-	float4x4 _DirectionalShadowMatrices
-		[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
+	// world->shadow的矩阵
+	float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
 	float4 _ShadowAtlasSize;
 	float4 _ShadowDistanceFade;
 CBUFFER_END
@@ -44,17 +50,14 @@ float FadedShadowStrength (float distance, float scale, float fade) {
 ShadowData GetShadowData (Surface surfaceWS) {
 	ShadowData data;
 	data.cascadeBlend = 1.0;
-	data.strength = FadedShadowStrength(
-		surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y
-	);
+	data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
 	int i;
 	for (i = 0; i < _CascadeCount; i++) {
 		float4 sphere = _CascadeCullingSpheres[i];
+		// 计算顶点和球体的中心的距离
 		float distanceSqr = DistanceSquared(surfaceWS.position, sphere.xyz);
 		if (distanceSqr < sphere.w) {
-			float fade = FadedShadowStrength(
-				distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z
-			);
+			float fade = FadedShadowStrength(distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
 			if (i == _CascadeCount - 1) {
 				data.strength *= fade;
 			}
@@ -86,10 +89,9 @@ struct DirectionalShadowData {
 	float normalBias;
 };
 
+// positionSTS是shadowspace的位置
 float SampleDirectionalShadowAtlas (float3 positionSTS) {
-	return SAMPLE_TEXTURE2D_SHADOW(
-		_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS
-	);
+	return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS);
 }
 
 float FilterDirectionalShadow (float3 positionSTS) {
@@ -110,9 +112,7 @@ float FilterDirectionalShadow (float3 positionSTS) {
 	#endif
 }
 
-float GetDirectionalShadowAttenuation (
-	DirectionalShadowData directional, ShadowData global, Surface surfaceWS
-) {
+float GetDirectionalShadowAttenuation (DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
 	#if !defined(_RECEIVE_SHADOWS)
 		return 1.0;
 	#endif
@@ -122,6 +122,7 @@ float GetDirectionalShadowAttenuation (
 	float3 normalBias = surfaceWS.normal *
 		(directional.normalBias * _CascadeData[global.cascadeIndex].y);
 	float3 positionSTS = mul(
+		// worldspace -> shadowspace
 		_DirectionalShadowMatrices[directional.tileIndex],
 		float4(surfaceWS.position + normalBias, 1.0)
 	).xyz;
@@ -129,6 +130,7 @@ float GetDirectionalShadowAttenuation (
 	if (global.cascadeBlend < 1.0) {
 		normalBias = surfaceWS.normal *
 			(directional.normalBias * _CascadeData[global.cascadeIndex + 1].y);
+		// worldspace -> shadowspace
 		positionSTS = mul(
 			_DirectionalShadowMatrices[directional.tileIndex + 1],
 			float4(surfaceWS.position + normalBias, 1.0)

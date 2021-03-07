@@ -7,11 +7,15 @@ struct BRDF {
 	float roughness;
 };
 
+// 物体反射的辐射能量占总辐射能量的百分比，称为反射率,总是 < 1
+// https://zhuanlan.zhihu.com/p/335664226
+// 非金属的反射率有所不同，但平均约为0.04
 #define MIN_REFLECTIVITY 0.04
 
 float OneMinusReflectivity (float metallic) {
 	float range = 1.0 - MIN_REFLECTIVITY;
-	// range * (1 - metallic)
+	// (1.0 - MIN_REFLECTIVITY) * (1 - metallic)
+	// (1 - metallic)得到一个趋向于非金属的数据，一般来说就是漫反射
 	return range - metallic * range;
 }
 

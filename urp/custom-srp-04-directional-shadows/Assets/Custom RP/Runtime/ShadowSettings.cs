@@ -2,14 +2,21 @@
 
 [System.Serializable]
 public class ShadowSettings {
-
+	// shadow大纹理size
 	public enum MapSize {
-		_256 = 256, _512 = 512, _1024 = 1024,
-		_2048 = 2048, _4096 = 4096, _8192 = 8192
+		_256 = 256,
+		_512 = 512, 
+		_1024 = 1024,
+		_2048 = 2048,
+		_4096 = 4096,
+		_8192 = 8192
 	}
 
 	public enum FilterMode {
-		PCF2x2, PCF3x3, PCF5x5, PCF7x7
+		PCF2x2,
+		PCF3x3, 
+		PCF5x5, 
+		PCF7x7
 	}
 
 	[Min(0.001f)]
@@ -21,7 +28,7 @@ public class ShadowSettings {
 	[System.Serializable]
 	public struct Directional {
 
-		public MapSize atlasSize;
+		public MapSize atlasSize;  // shadowmap是一张atlas
 
 		public FilterMode filter;
 
@@ -31,8 +38,7 @@ public class ShadowSettings {
 		[Range(0f, 1f)]
 		public float cascadeRatio1, cascadeRatio2, cascadeRatio3;
 
-		public Vector3 CascadeRatios =>
-			new Vector3(cascadeRatio1, cascadeRatio2, cascadeRatio3);
+		public Vector3 CascadeRatios => new Vector3(cascadeRatio1, cascadeRatio2, cascadeRatio3);
 
 		[Range(0.001f, 1f)]
 		public float cascadeFade;

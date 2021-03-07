@@ -37,9 +37,12 @@ public partial class CameraRenderer {
 		
 		buffer.BeginSample(SampleName);
 		ExecuteBuffer();
+		// 先渲染阴影
 		lighting.Setup(context, cullingResults, shadowSettings);
-		buffer.EndSample(SampleName);
+		// 再设置相机参数，否则出问题
 		Setup();
+		buffer.EndSample(SampleName);
+
 		DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
 		DrawUnsupportedShaders();
 		DrawGizmos();
@@ -49,6 +52,8 @@ public partial class CameraRenderer {
 
 	bool Cull (float maxShadowDistance) {
 		if (camera.TryGetCullingParameters(out ScriptableCullingParameters p)) {
+			// 裁减参数中设置关于shadowdistance
+			// maxShadowDistance是针对相机的参数，而不是针对光源的参数
 			p.shadowDistance = Mathf.Min(maxShadowDistance, camera.farClipPlane);
 			cullingResults = context.Cull(ref p);
 			return true;

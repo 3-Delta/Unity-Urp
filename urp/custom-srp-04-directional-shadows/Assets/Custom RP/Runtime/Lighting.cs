@@ -12,8 +12,7 @@ public class Lighting {
 		dirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
 		dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
 		dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
-		dirLightShadowDataId =
-			Shader.PropertyToID("_DirectionalLightShadowData");
+		dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
 	static Vector4[]
 		dirLightColors = new Vector4[maxDirLightCount],
@@ -29,9 +28,7 @@ public class Lighting {
 	Shadows shadows = new Shadows();
 
 	public void Setup (
-		ScriptableRenderContext context, CullingResults cullingResults,
-		ShadowSettings shadowSettings
-	) {
+		ScriptableRenderContext context, CullingResults cullingResults, ShadowSettings shadowSettings) {
 		this.cullingResults = cullingResults;
 		buffer.BeginSample(bufferName);
 		shadows.Setup(context, cullingResults, shadowSettings);
@@ -67,8 +64,10 @@ public class Lighting {
 
 	void SetupDirectionalLight (int index, ref VisibleLight visibleLight) {
 		dirLightColors[index] = visibleLight.finalColor;
+		// light的-forward
 		dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-		dirLightShadowData[index] =
-			shadows.ReserveDirectionalShadows(visibleLight.light, index);
+		// 有可能存在光源有4个，但是shadow光源不足4个的情况，此时 dirLightShadowData[index] == vector3.zero
+		// 从代码看，绝对不可能出现4个光源，但是有4个以上的shadow光源
+		dirLightShadowData[index] = shadows.ReserveDirectionalShadows(visibleLight.light, index);
 	}
 }

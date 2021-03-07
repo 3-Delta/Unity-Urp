@@ -3,6 +3,7 @@
 
 float3 IncomingLight (Surface surface, Light light) {
 	return
+		// 计算衰减
 		saturate(dot(surface.normal, light.direction) * light.attenuation) *
 		light.color;
 }
