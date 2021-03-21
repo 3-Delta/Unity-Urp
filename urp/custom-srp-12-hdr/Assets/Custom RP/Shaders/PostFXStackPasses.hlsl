@@ -6,6 +6,9 @@
 
 TEXTURE2D(_PostFXSource);
 TEXTURE2D(_PostFXSource2);
+// 纹理采样器设置，之前是设置纹理属性，这里设置纹理采样器，如果两者不一样，会出现什么问题？
+// 因为framebuffer其实不能显式设置这些属性，所以这里通过采样器设置！
+// filtermode为linear, warpmode为clamp
 SAMPLER(sampler_linear_clamp);
 
 float4 _PostFXSource_TexelSize;
@@ -45,6 +48,12 @@ Varyings DefaultPassVertex (uint vertexID : SV_VertexID) {
 		vertexID <= 1 ? 0.0 : 2.0,
 		vertexID == 1 ? 2.0 : 0.0
 	);
+
+	// https://zhuanlan.zhihu.com/p/339443207
+	// 。Unity通常会隐藏它，但是在涉及渲染纹理的所有情况下都不能这样做。
+	// 幸运的是，Unity指示是否需要通过_ProjectionParams向量的X分量进行手动翻转，
+	// 该向量应在UnityInput中定义。
+	// dx和opengl坐标转换
 	if (_ProjectionParams.x < 0.0) {
 		output.screenUV.y = 1.0 - output.screenUV.y;
 	}

@@ -6,6 +6,8 @@ public class PostFXSettings : ScriptableObject {
 	[SerializeField]
 	Shader shader = default;
 
+	#region BloomSettings
+
 	[System.Serializable]
 	public struct BloomSettings {
 
@@ -13,7 +15,7 @@ public class PostFXSettings : ScriptableObject {
 		public int maxIterations;
 
 		[Min(1f)]
-		public int downscaleLimit;
+		public int downscaleLimit;	 // 下采样最小rt纹理限制
 
 		public bool bicubicUpsampling;
 
@@ -42,6 +44,9 @@ public class PostFXSettings : ScriptableObject {
 	};
 
 	public BloomSettings Bloom => bloom;
+	#endregion
+
+	#region  ToneMappingSettings
 
 	[System.Serializable]
 	public struct ToneMappingSettings {
@@ -55,6 +60,8 @@ public class PostFXSettings : ScriptableObject {
 	ToneMappingSettings toneMapping = default;
 
 	public ToneMappingSettings ToneMapping => toneMapping;
+
+	#endregion
 
 	[System.NonSerialized]
 	Material material;

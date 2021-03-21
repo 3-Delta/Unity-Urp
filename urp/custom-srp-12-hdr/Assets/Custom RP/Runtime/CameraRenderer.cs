@@ -54,11 +54,15 @@ public partial class CameraRenderer {
 			useDynamicBatching, useGPUInstancing, useLightsPerObject
 		);
 		DrawUnsupportedShaders();
+
+		#region 后处理
 		DrawGizmosBeforeFX();
 		if (postFXStack.IsActive) {
 			postFXStack.Render(frameBufferId);
 		}
 		DrawGizmosAfterFX();
+		#endregion
+
 		Cleanup();
 		Submit();
 	}
@@ -78,6 +82,7 @@ public partial class CameraRenderer {
 
 		if (postFXStack.IsActive) {
 			if (flags > CameraClearFlags.Color) {
+				// 始终清理color和depth,因为 frameBufferId对应的rt不知道是什么颜色
 				flags = CameraClearFlags.Color;
 			}
 			buffer.GetTemporaryRT(

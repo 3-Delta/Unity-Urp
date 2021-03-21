@@ -19,6 +19,7 @@ public partial class PostFXStack {
 
 	const string bufferName = "Post FX";
 
+	// 纹理金字塔，其实就是下采样的次数。每次/2
 	const int maxBloomPyramidLevels = 16;
 
 	int
@@ -27,6 +28,7 @@ public partial class PostFXStack {
 		bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
 		bloomResultId = Shader.PropertyToID("_BloomResult"),
 		bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
+
 		fxSourceId = Shader.PropertyToID("_PostFXSource"),
 		fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -49,6 +51,8 @@ public partial class PostFXStack {
 	public PostFXStack () {
 		bloomPyramidId = Shader.PropertyToID("_BloomPyramid0");
 		for (int i = 1; i < maxBloomPyramidLevels * 2; i++) {
+			// 顺序分配金字塔纹理标识符，只需要追踪第一个
+			// 因为是+1的关系
 			Shader.PropertyToID("_BloomPyramid" + i);
 		}
 	}
@@ -67,6 +71,7 @@ public partial class PostFXStack {
 
 	public void Render (int sourceId) {
 		if (DoBloom(sourceId)) {
+			// 后处理顺序，先bloom,后tonemap
 			DoToneMapping(bloomResultId);
 			buffer.ReleaseTemporaryRT(bloomResultId);
 		}
@@ -79,7 +84,8 @@ public partial class PostFXStack {
 
 	bool DoBloom (int sourceId) {
 		PostFXSettings.BloomSettings bloom = settings.Bloom;
-		int width = camera.pixelWidth / 2, height = camera.pixelHeight / 2;
+		int width = camera.pixelWidth / 2;
+		int height = camera.pixelHeight / 2;
 		
 		if (
 			bloom.maxIterations == 0 || bloom.intensity <= 0f ||
@@ -106,24 +112,33 @@ public partial class PostFXStack {
 			sourceId, bloomPrefilterId, bloom.fadeFireflies ?
 				Pass.BloomPrefilterFireflies : Pass.BloomPrefilter
 		);
+
 		width /= 2;
 		height /= 2;
 
-		int fromId = bloomPrefilterId, toId = bloomPyramidId + 1;
+		int fromId = bloomPrefilterId;
+		int toId = bloomPyramidId + 1;
 		int i;
+		// 限制下采样次数
 		for (i = 0; i < bloom.maxIterations; i++) {
+			// 一般是 if (height < 1 || width < 1)
 			if (height < bloom.downscaleLimit || width < bloom.downscaleLimit) {
 				break;
 			}
+
 			int midId = toId - 1;
+
 			buffer.GetTemporaryRT(
 				midId, width, height, 0, FilterMode.Bilinear, format
 			);
 			buffer.GetTemporaryRT(
 				toId, width, height, 0, FilterMode.Bilinear, format
 			);
+
+			// 同一层级的下采样，分别进行水平，垂直的bloom处理
 			Draw(fromId, midId, Pass.BloomHorizontal);
 			Draw(midId, toId, Pass.BloomVertical);
+
 			fromId = toId;
 			toId += 2;
 			width /= 2;
@@ -189,6 +204,8 @@ public partial class PostFXStack {
 		buffer.SetRenderTarget(
 			to, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store
 		);
+
+		// 默认的bilt是绘制qurd的两个三角形，为了效率，这里程序绘制一个三角形
 		buffer.DrawProcedural(
 			Matrix4x4.identity, settings.Material, (int)pass,
 			MeshTopology.Triangles, 3
