@@ -17,7 +17,7 @@ public class PostFXSettings : ScriptableObject {
 		[Min(1f)]
 		public int downscaleLimit;	 // 下采样最小rt纹理限制
 
-		public bool bicubicUpsampling;
+		public bool bicubicUpsampling;	// 是否使用三线性采样得到模糊
 
 		[Min(0f)]
 		public float threshold;

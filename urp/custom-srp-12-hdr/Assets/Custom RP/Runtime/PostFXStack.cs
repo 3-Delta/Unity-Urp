@@ -29,6 +29,8 @@ public partial class PostFXStack {
 		bloomResultId = Shader.PropertyToID("_BloomResult"),
 		bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
 
+		// 事实证明这些 字符串名字必须对应在shader中存在，否则效果不正确
+		// 除非这个 字符串名字是rt， 注意rt这里不是普通纹理
 		fxSourceId = Shader.PropertyToID("_PostFXSource"),
 		fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -69,6 +71,7 @@ public partial class PostFXStack {
 		ApplySceneViewState();
 	}
 
+	// sourceId是frameBufferId
 	public void Render (int sourceId) {
 		if (DoBloom(sourceId)) {
 			// 后处理顺序，先bloom,后tonemap
@@ -108,6 +111,7 @@ public partial class PostFXStack {
 		buffer.GetTemporaryRT(
 			bloomPrefilterId, width, height, 0, FilterMode.Bilinear, format
 		);
+
 		Draw(
 			sourceId, bloomPrefilterId, bloom.fadeFireflies ?
 				Pass.BloomPrefilterFireflies : Pass.BloomPrefilter
@@ -150,7 +154,8 @@ public partial class PostFXStack {
 			bloomBucibicUpsamplingId, bloom.bicubicUpsampling ? 1f : 0f
 		);
 
-		Pass combinePass, finalPass;
+		Pass combinePass;
+		Pass finalPass;
 		float finalIntensity;
 		if (bloom.mode == PostFXSettings.BloomSettings.Mode.Additive) {
 			combinePass = finalPass = Pass.BloomAdd;
@@ -165,9 +170,12 @@ public partial class PostFXStack {
 		}
 
 		if (i > 1) {
+			// 上采样，blend金字塔各层级的tex到一起，默认纹理格式是linear, clamp格式
+			// 上采样的时候，不进行高斯模糊处理
 			buffer.ReleaseTemporaryRT(fromId - 1);
 			toId -= 5;
 			for (i -= 1; i > 0; i--) {
+				// copy(to的rt, fx2d对应的纹理)
 				buffer.SetGlobalTexture(fxSource2Id, toId + 1);
 				Draw(fromId, toId, combinePass);
 				buffer.ReleaseTemporaryRT(fromId);
@@ -200,6 +208,12 @@ public partial class PostFXStack {
 	void Draw (
 		RenderTargetIdentifier from, RenderTargetIdentifier to, Pass pass
 	) {
+		// buffer.Blit(sourceId, BuiltinRenderTextureType.CameraTarget);
+		// 复制到目前为止渲染的任何内容到相机的帧缓冲区
+		// https://zhuanlan.zhihu.com/p/339443207
+
+		// 将rt赋值给 fxSourceId对应的纹理
+		// 类似于copy(from, fxSourceId)
 		buffer.SetGlobalTexture(fxSourceId, from);
 		buffer.SetRenderTarget(
 			to, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store

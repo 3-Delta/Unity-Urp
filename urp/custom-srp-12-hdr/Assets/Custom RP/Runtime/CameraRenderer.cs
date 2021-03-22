@@ -9,6 +9,7 @@ public partial class CameraRenderer {
 		unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
 		litShaderTagId = new ShaderTagId("CustomLit");
 
+	// 这里是cpu通知生成一个rt，一般用于GetTempRT
 	static int frameBufferId = Shader.PropertyToID("_CameraFrameBuffer");
 
 	CommandBuffer buffer = new CommandBuffer {
@@ -44,11 +45,13 @@ public partial class CameraRenderer {
 
 		buffer.BeginSample(SampleName);
 		ExecuteBuffer();
+		// 设置了后续渲染目标不是framebuffer,而是shadowmap
 		lighting.Setup(
 			context, cullingResults, shadowSettings, useLightsPerObject
 		);
 		postFXStack.Setup(context, camera, postFXSettings, useHDR);
 		buffer.EndSample(SampleName);
+		// 设置了后续渲染目标不是framebuffer,而是frameBufferId
 		Setup();
 		DrawVisibleGeometry(
 			useDynamicBatching, useGPUInstancing, useLightsPerObject

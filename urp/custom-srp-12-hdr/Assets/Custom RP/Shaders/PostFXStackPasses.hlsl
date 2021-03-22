@@ -77,14 +77,19 @@ float4 BloomAddPassFragment (Varyings input) : SV_TARGET {
 
 float4 BloomHorizontalPassFragment (Varyings input) : SV_TARGET {
 	float3 color = 0.0;
+	// 9*9的核
 	float offsets[] = {
-		-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0
+		-4.0, -3.0, -2.0, -1.0,
+		0.0,
+		1.0, 2.0, 3.0, 4.0
 	};
 	float weights[] = {
-		0.01621622, 0.05405405, 0.12162162, 0.19459459, 0.22702703,
+		0.01621622, 0.05405405, 0.12162162, 0.19459459,
+		0.22702703,
 		0.19459459, 0.12162162, 0.05405405, 0.01621622
 	};
 	for (int i = 0; i < 9; i++) {
+		// 这里因为要下采样同时模糊，那么就需要w/h 都/2, 所以这里uv offset需要 *2
 		float offset = offsets[i] * 2.0 * GetSourceTexelSize().x;
 		color += GetSource(input.screenUV + float2(offset, 0.0)).rgb * weights[i];
 	}
@@ -160,7 +165,10 @@ float4 BloomVerticalPassFragment (Varyings input) : SV_TARGET {
 	float weights[] = {
 		0.07027027, 0.31621622, 0.22702703, 0.31621622, 0.07027027
 	};
+	// 水平采样9次，这里为了减少采样次数，节省带宽，使用5次采样迭代
 	for (int i = 0; i < 5; i++) {
+		// 因为水平下采样模糊的时候，分辨率减半了，而垂直模糊的时候，只是模糊，没有下采样，所以垂直v坐标
+		// 不需要减半，也就是*2
 		float offset = offsets[i] * GetSourceTexelSize().y;
 		color += GetSource(input.screenUV + float2(0.0, offset)).rgb * weights[i];
 	}
