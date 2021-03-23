@@ -26,8 +26,9 @@ public partial class PostFXStack {
 		bloomBucibicUpsamplingId = Shader.PropertyToID("_BloomBicubicUpsampling"),
 		bloomIntensityId = Shader.PropertyToID("_BloomIntensity"),
 		bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
-		bloomResultId = Shader.PropertyToID("_BloomResult"),
 		bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
+
+		bloomResultId = Shader.PropertyToID("_BloomResult"),
 
 		// 事实证明这些 字符串名字必须对应在shader中存在，否则效果不正确
 		// 除非这个 字符串名字是rt， 注意rt这里不是普通纹理
@@ -165,6 +166,7 @@ public partial class PostFXStack {
 		else {
 			combinePass = Pass.BloomScatter;
 			finalPass = Pass.BloomScatterFinal;
+			// bloom散射强度
 			buffer.SetGlobalFloat(bloomIntensityId, bloom.scatter);
 			finalIntensity = Mathf.Min(bloom.intensity, 1f);
 		}

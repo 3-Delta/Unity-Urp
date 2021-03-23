@@ -28,7 +28,7 @@ public class PostFXSettings : ScriptableObject {
 		[Min(0f)]
 		public float intensity;
 
-		public bool fadeFireflies;
+		public bool fadeFireflies;	// 消除hdr导致的萤火虫，需要fade配合blur
 
 		public enum Mode { Additive, Scattering }
 

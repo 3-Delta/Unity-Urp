@@ -72,6 +72,7 @@ float4 BloomAddPassFragment (Varyings input) : SV_TARGET {
 		lowRes = GetSource(input.screenUV).rgb;
 	}
 	float3 highRes = GetSource2(input.screenUV).rgb;
+	// 低分辨使用bloom才能进一步进行模糊，同时配合bloom系数 _BloomIntensity
 	return float4(lowRes * _BloomIntensity + highRes, 1.0);
 }
 
@@ -118,11 +119,13 @@ float4 BloomPrefilterFirefliesPassFragment (Varyings input) : SV_TARGET {
 	float weightSum = 0.0;
 	float2 offsets[] = {
 		float2(0.0, 0.0),
-		float2(-1.0, -1.0), float2(-1.0, 1.0), float2(1.0, -1.0), float2(1.0, 1.0)
+		float2(-1.0, -1.0), 
+		float2(-1.0, 1.0), 
+		float2(1.0, -1.0), 
+		float2(1.0, 1.0)
 	};
 	for (int i = 0; i < 5; i++) {
-		float3 c =
-			GetSource(input.screenUV + offsets[i] * GetSourceTexelSize().xy * 2.0).rgb;
+		float3 c = GetSource(input.screenUV + offsets[i] * GetSourceTexelSize().xy * 2.0).rgb;
 		c = ApplyBloomThreshold(c);
 		float w = 1.0 / (Luminance(c) + 1.0);
 		color += c * w;
