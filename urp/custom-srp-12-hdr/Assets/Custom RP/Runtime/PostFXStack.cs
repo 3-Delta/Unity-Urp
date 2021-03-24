@@ -204,6 +204,8 @@ public partial class PostFXStack {
 	void DoToneMapping(int sourceId) {
 		PostFXSettings.ToneMappingSettings.Mode mode = settings.ToneMapping.mode;
 		Pass pass = mode < 0 ? Pass.Copy : Pass.ToneMappingACES + (int)mode;
+		
+		// 最后一步肯定需要将rt copy 到framebuffer
 		Draw(sourceId, BuiltinRenderTextureType.CameraTarget, pass);
 	}
 
