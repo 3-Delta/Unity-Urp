@@ -30,6 +30,7 @@ public partial class PostFXStack {
 		bloomPrefilterId = Shader.PropertyToID("_BloomPrefilter"),
 		bloomResultId = Shader.PropertyToID("_BloomResult"),
 		bloomThresholdId = Shader.PropertyToID("_BloomThreshold"),
+
 		fxSourceId = Shader.PropertyToID("_PostFXSource"),
 		fxSource2Id = Shader.PropertyToID("_PostFXSource2");
 
@@ -37,8 +38,10 @@ public partial class PostFXStack {
 		colorGradingLUTId = Shader.PropertyToID("_ColorGradingLUT"),
 		colorGradingLUTParametersId = Shader.PropertyToID("_ColorGradingLUTParameters"),
 		colorGradingLUTInLogId = Shader.PropertyToID("_ColorGradingLUTInLogC"),
+
 		colorAdjustmentsId = Shader.PropertyToID("_ColorAdjustments"),
 		colorFilterId = Shader.PropertyToID("_ColorFilter"),
+
 		whiteBalanceId = Shader.PropertyToID("_WhiteBalance"),
 		splitToningShadowsId = Shader.PropertyToID("_SplitToningShadows"),
 		splitToningHighlightsId = Shader.PropertyToID("_SplitToningHighlights"),
@@ -202,11 +205,13 @@ public partial class PostFXStack {
 	void ConfigureColorAdjustments () {
 		ColorAdjustmentsSettings colorAdjustments = settings.ColorAdjustments;
 		buffer.SetGlobalVector(colorAdjustmentsId, new Vector4(
+			// 曝光度，对比度（0~2），色调（-1~1），饱和度（0~2）
 			Mathf.Pow(2f, colorAdjustments.postExposure),
 			colorAdjustments.contrast * 0.01f + 1f,
 			colorAdjustments.hueShift * (1f / 360f),
 			colorAdjustments.saturation * 0.01f + 1f
 		));
+		// 	colorFilter需要线性空间
 		buffer.SetGlobalColor(colorFilterId, colorAdjustments.colorFilter.linear);
 	}
 

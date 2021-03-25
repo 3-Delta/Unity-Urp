@@ -162,6 +162,8 @@ float4 CopyPassFragment (Varyings input) : SV_TARGET {
 	return GetSource(input.screenUV);
 }
 
+// 后处理系列： 颜色渐变
+
 float4 _ColorAdjustments;
 float4 _ColorFilter;
 float4 _WhiteBalance;
