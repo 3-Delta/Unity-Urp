@@ -291,7 +291,9 @@ float3 ApplyColorGradingLUT (float3 color) {
 }
 
 float4 FinalPassFragment (Varyings input) : SV_TARGET {
+	// 原始color
 	float4 color = GetSource(input.screenUV);
+	// lut转换原始color
 	color.rgb = ApplyColorGradingLUT(color.rgb);
 	return color;
 }

@@ -276,6 +276,8 @@ public partial class PostFXStack {
 		buffer.SetGlobalVector(colorGradingLUTParametersId,
 			new Vector4(1f / lutWidth, 1f / lutHeight, lutHeight - 1f)
 		);
+
+		// 最后一个绘制使用	DrawFinal，而不是Draw
 		DrawFinal(sourceId);
 		buffer.ReleaseTemporaryRT(colorGradingLUTId);
 	}
@@ -293,6 +295,7 @@ public partial class PostFXStack {
 	void DrawFinal (RenderTargetIdentifier from) {
 		buffer.SetGlobalFloat(finalSrcBlendId, (float)finalBlendMode.source);
 		buffer.SetGlobalFloat(finalDstBlendId, (float)finalBlendMode.destination);
+
 		buffer.SetGlobalTexture(fxSourceId, from);
 		buffer.SetRenderTarget(
 			BuiltinRenderTextureType.CameraTarget,
@@ -300,6 +303,8 @@ public partial class PostFXStack {
 				RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load,
 			RenderBufferStoreAction.Store
 		);
+		// 考虑到ViewPoer的影响，这里进行处理
+		// 多相机的关键就是这里，否则就是后者覆盖前者的关系
 		buffer.SetViewport(camera.pixelRect);
 		buffer.DrawProcedural(
 			Matrix4x4.identity, settings.Material,
