@@ -42,6 +42,9 @@ public partial class CameraRenderer {
 		CameraSettings cameraSettings =
 			crpCamera ? crpCamera.Settings : defaultCameraSettings;
 
+		// 如果每个相机的设置需要覆盖最终的urp设置，则直接覆盖
+		// 所以这里是对于每个camera渲染处理的CameraRenderer,而不是RendererPipeline中，而且各种setting都是pipeline中参数传递下来给camera的，
+		// 所以最佳override就是这里
 		if (cameraSettings.overridePostFX) {
 			postFXSettings = cameraSettings.postFXSettings;
 		}
@@ -94,6 +97,8 @@ public partial class CameraRenderer {
 
 		if (postFXStack.IsActive) {
 			if (flags > CameraClearFlags.Color) {
+				// 后处理强制设置清理color,depth
+				// 如果是skybox, solidcolor则原样处理
 				flags = CameraClearFlags.Color;
 			}
 			buffer.GetTemporaryRT(
@@ -107,6 +112,14 @@ public partial class CameraRenderer {
 			);
 		}
 
+		// 非后处理：skybox: true, false, Color.clear camera2绘制因为已经cleardepth的关系会直接覆盖camera1的部分color
+		// 非后处理：solidcolor: true, true, camera.backgroundColor.linear camera2绘制因为已经cleardepth的关系会直接覆盖camera1的部分color
+
+		// 非后处理：depthonly: true, false, Color.clear
+		// 后处理: depthonly: true, true, camera.backgroundColor.linear
+
+		// 后处理：skybox : true, false, Color.clear
+		// 后处理：solidcolor : true, true, camera.backgroundColor.linear
 		buffer.ClearRenderTarget(
 			flags <= CameraClearFlags.Depth,
 			flags == CameraClearFlags.Color,

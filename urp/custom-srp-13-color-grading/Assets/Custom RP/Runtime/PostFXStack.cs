@@ -255,6 +255,7 @@ public partial class PostFXStack {
 		ConfigureShadowsMidtonesHighlights();
 
 		int lutHeight = colorLUTResolution;
+		// 因为是2d模拟的3d纹理，所以需要 lutWidth = lutHeight * lutHeight
 		int lutWidth = lutHeight * lutHeight;
 		buffer.GetTemporaryRT(
 			colorGradingLUTId, lutWidth, lutHeight, 0,

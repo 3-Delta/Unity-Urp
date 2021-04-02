@@ -133,6 +133,7 @@
 		Pass {
 			Name "Final"
 
+			// 默认是one zero的混合模式，也就是后者直接覆盖前者
 			Blend [_FinalSrcBlend] [_FinalDstBlend]
 			
 			HLSLPROGRAM

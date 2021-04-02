@@ -3032,7 +3032,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &556230793
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3137,8 +3137,8 @@ Camera:
   m_GameObject: {fileID: 578567832}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 1, g: 0, b: 0.038758278, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -3147,8 +3147,8 @@ Camera:
   m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.5
-    y: 0.5
+    x: 0.25
+    y: 0.25
     width: 0.5
     height: 0.5
   near clip plane: 0.3
@@ -3179,7 +3179,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 578567832}
   m_LocalRotation: {x: 0.40444717, y: -0.009613395, z: 0.004224701, w: 0.9145011}
-  m_LocalPosition: {x: 0.86950254, y: 9.188897, z: -8.136195}
+  m_LocalPosition: {x: 0.88, y: 9.46, z: -8.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -5590,9 +5590,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0.5
-    width: 0.5
-    height: 0.5
+    y: 0
+    width: 1
+    height: 1
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5978,7 +5978,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!20 &1054065470
 Camera:
   m_ObjectHideFlags: 0
@@ -6724,7 +6724,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1289644781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8782,7 +8782,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1669072724
 MonoBehaviour:
   m_ObjectHideFlags: 0
