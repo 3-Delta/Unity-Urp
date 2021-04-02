@@ -172,10 +172,12 @@ float4 _ChannelMixerRed, _ChannelMixerGreen, _ChannelMixerBlue;
 float4 _SMHShadows, _SMHMidtones, _SMHHighlights, _SMHRange;
 
 float Luminance (float3 color, bool useACES) {
+	// 明度
 	return useACES ? AcesLuminance(color) : Luminance(color);
 }
 
 float3 ColorGradePostExposure (float3 color) {
+	// 曝光其实就是亮度的变化
 	return color * _ColorAdjustments.x;
 }
 
