@@ -42,8 +42,10 @@ Varyings ShadowCasterPassVertex (Attributes input) {
 	return output;
 }
 
+// 这里frag只是用于clip，如果不需要clip.则完全可以保持为空函数
 void ShadowCasterPassFragment (Varyings input) {
 	// 不外提供color
+	///*
 	UNITY_SETUP_INSTANCE_ID(input);
 	float4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.baseUV);
 	float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
@@ -55,6 +57,7 @@ void ShadowCasterPassFragment (Varyings input) {
 		float dither = InterleavedGradientNoise(input.positionCS.xy, 0);
 		clip(base.a - dither);
 	#endif
+	//*/
 }
 
 #endif

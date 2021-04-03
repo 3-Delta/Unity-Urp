@@ -38,12 +38,12 @@
 
 			#pragma multi_compile_instancing
 			#pragma vertex LitPassVertex
-			#pragma fragment LitPassFragment
+			#pragma fragment LitPassFragment // 会从shadowmap中采样depth，然后和光源信息一起进行计算
 			#include "LitPass.hlsl"
 			ENDHLSL
 		}
 
-		Pass { // 渲染阴影
+		Pass { // 渲染阴影 到 ShadowmapAtlas中
 			Tags {
 				"LightMode" = "ShadowCaster"
 			}

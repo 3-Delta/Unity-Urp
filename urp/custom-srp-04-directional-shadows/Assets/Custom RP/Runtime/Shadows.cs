@@ -126,6 +126,7 @@ public class Shadows {
             dirShadowAtlasId,
             RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store
         );
+        // 因为只需要depth
         buffer.ClearRenderTarget(true, false, Color.clear);
         buffer.BeginSample(bufferName);
         ExecuteBuffer();
@@ -178,8 +179,7 @@ public class Shadows {
         int cascadeCount = settings.directional.cascadeCount;
         int tileOffset = lightIndex * cascadeCount;
         Vector3 ratios = settings.directional.CascadeRatios;
-        float cullingFactor =
-            Mathf.Max(0f, 0.8f - settings.directional.cascadeFade);
+        float cullingFactor = Mathf.Max(0f, 0.8f - settings.directional.cascadeFade);
 
         // 每个光源的每个级联都要渲染一次shadowmap,而每个级联的vp矩阵肯定不一样
         for (int i = 0; i < cascadeCount; i++) {
@@ -196,12 +196,15 @@ public class Shadows {
                 SetCascadeData(i, splitData.cullingSphere, tileSize);
             }
             int tileIndex = tileOffset + i;
-            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, SetTileViewport(tileIndex, split, tileSize), split);
-            // 设置vp矩阵
+            var viewport = SetTileViewport(tileIndex, split, tileSize);
+            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, viewport, split);
+            // 设置每个级联的vp矩阵
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+            // 设置depthBias,而不是normalBias
             buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
             ExecuteBuffer();
 
+            // 阴影绘制核心操作
             context.DrawShadows(ref shadowSettings);
             buffer.SetGlobalDepthBias(0f, 0f);
         }

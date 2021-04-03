@@ -29,11 +29,11 @@ SAMPLER_CMP(SHADOW_SAMPLER);
 CBUFFER_START(_CustomShadows)
 	// 级联数
 	int _CascadeCount;
-	float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT];
+	float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT]; // cullingSphere半径的平方
 	float4 _CascadeData[MAX_CASCADE_COUNT];
 	// world->shadow的矩阵
 	float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
-	float4 _ShadowAtlasSize;
+	float4 _ShadowAtlasSize; // new Vector4(atlasSize, 1f / atlasSize)
 	float4 _ShadowDistanceFade;
 CBUFFER_END
 
@@ -43,20 +43,41 @@ struct ShadowData {
 	float strength;
 };
 
+// 处理fade渐变，也就是cascade突变，或者超过最大distance的时候
 float FadedShadowStrength (float distance, float scale, float fade) {
+    // (1 - deafDepth/maxDistance) / fade
 	return saturate((1.0 - distance * scale) * fade);
 }
 
-ShadowData GetShadowData (Surface surfaceWS) {
-	ShadowData data;
-	data.cascadeBlend = 1.0;
-	data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
-	int i;
+// 最简单的情况
+ShadowData GetShadowData_ (Surface surfaceWS) {
+    ShadowData data;
+    int i = 0;
+	// 判断当前frag在cullSphere的哪一级别的级联中
 	for (i = 0; i < _CascadeCount; i++) {
 		float4 sphere = _CascadeCullingSpheres[i];
 		// 计算顶点和球体的中心的距离
 		float distanceSqr = DistanceSquared(surfaceWS.position, sphere.xyz);
 		if (distanceSqr < sphere.w) {
+			break;
+		}
+	}
+}
+// lighting中获取shadowmap应该使用哪个级联
+ShadowData GetShadowData (Surface surfaceWS) {
+	ShadowData data;
+	data.cascadeBlend = 1.0;
+	// maxdistance的渐变是正常的长度渐变
+	data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
+	int i;
+	// 判断当前frag在cullSphere的哪一级别的级联中
+	for (i = 0; i < _CascadeCount; i++) {
+		float4 sphere = _CascadeCullingSpheres[i];
+		// 计算顶点和球体的中心的距离
+		float distanceSqr = DistanceSquared(surfaceWS.position, sphere.xyz);
+		if (distanceSqr < sphere.w) {
+		    // 在球体内
+		    // 级联渐变是 平方的渐变
 			float fade = FadedShadowStrength(distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
 			if (i == _CascadeCount - 1) {
 				data.strength *= fade;
@@ -66,9 +87,13 @@ ShadowData GetShadowData (Surface surfaceWS) {
 			}
 			break;
 		}
+		
+		data.cascadeIndex = i;
+	    return data;
 	}
 	
 	if (i == _CascadeCount) {
+	    // 不在任何cullSphere裁减区域之内
 		data.strength = 0.0;
 	}
 	#if defined(_CASCADE_BLEND_DITHER)
@@ -79,6 +104,8 @@ ShadowData GetShadowData (Surface surfaceWS) {
 	#if !defined(_CASCADE_BLEND_SOFT)
 		data.cascadeBlend = 1.0;
 	#endif
+	
+	// 通过cameraview的裁减球cullSphere,得到每个frag的使用的shadowmap的级联
 	data.cascadeIndex = i;
 	return data;
 }
@@ -90,28 +117,42 @@ struct DirectionalShadowData {
 };
 
 // positionSTS是shadowspace的位置
+// 获取某uv的shadowmap的depth
 float SampleDirectionalShadowAtlas (float3 positionSTS) {
 	return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS);
 }
 
+// 利用pcf机制对于positionSTS周边的filterSize*filterSize的矩形进行计算depth的平均值，也就是最终结果在（0， 1）之间
+// 目的是为了阴影锯齿 或者 软阴影
 float FilterDirectionalShadow (float3 positionSTS) {
 	#if defined(DIRECTIONAL_FILTER_SETUP)
+	    // 如果是pcf机制
 		float weights[DIRECTIONAL_FILTER_SAMPLES];
 		float2 positions[DIRECTIONAL_FILTER_SAMPLES];
 		float4 size = _ShadowAtlasSize.yyxx;
 		DIRECTIONAL_FILTER_SETUP(size, positionSTS.xy, weights, positions);
 		float shadow = 0;
+		// 片段完全被阴影覆盖，那么我们将得到零，而如果根本没有阴影，那么我们将得到一。之间的值表示片段被部分遮挡。
 		for (int i = 0; i < DIRECTIONAL_FILTER_SAMPLES; i++) {
-			shadow += weights[i] * SampleDirectionalShadowAtlas(
-				float3(positions[i].xy, positionSTS.z)
-			);
+			shadow += weights[i] * SampleDirectionalShadowAtlas(float3(positions[i].xy, positionSTS.z));
 		}
 		return shadow;
 	#else
+	    // 无pcf机制
 		return SampleDirectionalShadowAtlas(positionSTS);
 	#endif
 }
 
+// 最简单的情况
+// 返回shadowmap的depth
+float GetDirectionalShadowAttenuation_ (DirectionalShadowData directional, Surface surfaceWS) {
+    float3 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position /*+ normalBias*/, 1.0)).xyz;
+	float shadow = FilterDirectionalShadow(positionSTS);
+	return shadow;
+}
+
+// 返回shadowmap的depth
+// 有阴影，frag为1，无阴影，frag为0，部分阴影就是（0， 1），也就是lerp(1.0, depth, directional.strength)
 float GetDirectionalShadowAttenuation (DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
 	#if !defined(_RECEIVE_SHADOWS)
 		return 1.0;
@@ -119,25 +160,20 @@ float GetDirectionalShadowAttenuation (DirectionalShadowData directional, Shadow
 	if (directional.strength <= 0.0) {
 		return 1.0;
 	}
-	float3 normalBias = surfaceWS.normal *
-		(directional.normalBias * _CascadeData[global.cascadeIndex].y);
-	float3 positionSTS = mul(
-		// worldspace -> shadowspace
-		_DirectionalShadowMatrices[directional.tileIndex],
-		float4(surfaceWS.position + normalBias, 1.0)
-	).xyz;
+	// 每个级联应该使用的不是相同的pcfFilterSize
+	float filterSize = _CascadeData[global.cascadeIndex].y;
+	// normalBias的用法：* surfaceWS.normal，然后 + surfaceWS.position
+	float3 normalBias = surfaceWS.normal * (directional.normalBias * filterSize);
+	// worldspace -> shadowspace
+	float3 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0)).xyz;
 	float shadow = FilterDirectionalShadow(positionSTS);
+	
+	// 如果需要级联的混合过度
 	if (global.cascadeBlend < 1.0) {
-		normalBias = surfaceWS.normal *
-			(directional.normalBias * _CascadeData[global.cascadeIndex + 1].y);
+		normalBias = surfaceWS.normal * (directional.normalBias * filterSize);
 		// worldspace -> shadowspace
-		positionSTS = mul(
-			_DirectionalShadowMatrices[directional.tileIndex + 1],
-			float4(surfaceWS.position + normalBias, 1.0)
-		).xyz;
-		shadow = lerp(
-			FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend
-		);
+		positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex + 1], float4(surfaceWS.position + normalBias, 1.0)).xyz;
+		shadow = lerp(FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
 	}
 	return lerp(1.0, shadow, directional.strength);
 }

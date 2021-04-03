@@ -20,10 +20,10 @@ public class ShadowSettings {
 	}
 
 	[Min(0.001f)]
-	public float maxDistance = 100f;
+	public float maxDistance = 100f;   // 针对相机，不是光源，而且不是到相机位置的距离， 而是cameraview的depth，简单理解就是到camera的nearplane的距离
 
 	[Range(0.001f, 1f)]
-	public float distanceFade = 0.1f;
+	public float distanceFade = 0.1f; // 超出最大距离的阴影渐变
 
 	[System.Serializable]
 	public struct Directional {
@@ -41,7 +41,7 @@ public class ShadowSettings {
 		public Vector3 CascadeRatios => new Vector3(cascadeRatio1, cascadeRatio2, cascadeRatio3);
 
 		[Range(0.001f, 1f)]
-		public float cascadeFade;
+		public float cascadeFade; // 级联变化的渐变
 
 		public enum CascadeBlendMode {
 			Hard, Soft, Dither
