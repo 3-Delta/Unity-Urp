@@ -13,6 +13,12 @@ float3 GetLighting (Surface surface, BRDF brdf, Light light) {
 
 float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
 	ShadowData shadowData = GetShadowData(surfaceWS);
+	// 原来：float3 color = 0.0;
+
+	// 可以单纯测试gi：
+	//float3 color = gi.diffuse;
+
+	// 有了GI：
 	float3 color = gi.diffuse * brdf.diffuse;
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {
 		Light light = GetDirectionalLight(i, surfaceWS, shadowData);

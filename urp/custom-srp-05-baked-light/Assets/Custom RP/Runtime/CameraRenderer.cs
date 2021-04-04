@@ -89,6 +89,9 @@ public partial class CameraRenderer {
 		) {
 			enableDynamicBatching = useDynamicBatching,
 			enableInstancing = useGPUInstancing,
+			// https://zhuanlan.zhihu.com/p/337121368
+			// 添加关于lightmap的计算
+			// 添加这里之后，Unity会使用shader中包含有LIGHT_ON的shader进行着色
 			perObjectData =
 				PerObjectData.Lightmaps | PerObjectData.LightProbe |
 				PerObjectData.LightProbeProxyVolume

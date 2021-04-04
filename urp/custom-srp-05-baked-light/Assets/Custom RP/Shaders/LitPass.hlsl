@@ -12,7 +12,7 @@ struct Attributes {
 	float3 positionOS : POSITION;
 	float3 normalOS : NORMAL;
 	float2 baseUV : TEXCOORD0;
-	GI_ATTRIBUTE_DATA
+	GI_ATTRIBUTE_DATA	// float2 lightMapUV : TEXCOORD1;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -21,7 +21,7 @@ struct Varyings {
 	float3 positionWS : VAR_POSITION;
 	float3 normalWS : VAR_NORMAL;
 	float2 baseUV : VAR_BASE_UV;
-	GI_VARYINGS_DATA
+	GI_VARYINGS_DATA  // float2 lightMapUV : VAR_LIGHT_MAP_UV
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -29,7 +29,9 @@ Varyings LitPassVertex (Attributes input) {
 	Varyings output;
 	UNITY_SETUP_INSTANCE_ID(input);
 	UNITY_TRANSFER_INSTANCE_ID(input, output);
+	// 计算lightMapUV
 	TRANSFER_GI_DATA(input, output);
+
 	output.positionWS = TransformObjectToWorld(input.positionOS);
 	output.positionCS = TransformWorldToHClip(output.positionWS);
 	output.normalWS = TransformObjectToWorldNormal(input.normalOS);
@@ -59,8 +61,14 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	#else
 		BRDF brdf = GetBRDF(surface);
 	#endif
-	GI gi = GetGI(GI_FRAGMENT_DATA(input), surface);
+
+	// 添加关于gi的计算
+	// float2 lightMapUV = input.lightMapUV
+	float2 lightMapUV = GI_FRAGMENT_DATA(input);
+	GI gi = GetGI(lightMapUV, surface);
 	float3 color = GetLighting(surface, brdf, gi);
+
+	// 计算自发光
 	color += GetEmission(input.baseUV);
 	return float4(color, surface.alpha);
 }

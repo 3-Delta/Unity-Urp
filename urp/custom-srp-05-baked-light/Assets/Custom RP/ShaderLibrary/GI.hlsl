@@ -24,9 +24,11 @@ SAMPLER(samplerunity_ProbeVolumeSH);
 #endif
 
 struct GI {
+	// 因为间接光来自四面八方，所有只能用于漫反射
 	float3 diffuse;
 };
 
+// 采样lightmap
 float3 SampleLightMap (float2 lightMapUV) {
 	#if defined(LIGHTMAP_ON)
   		return SampleSingleLightmap(
@@ -44,14 +46,14 @@ float3 SampleLightMap (float2 lightMapUV) {
 	#endif
 }
 
+// 球鞋光采样
 float3 SampleLightProbe (Surface surfaceWS) {
 	#if defined(LIGHTMAP_ON)
 		return 0.0;
 	#else
 		if (unity_ProbeVolumeParams.x) {
 			return SampleProbeVolumeSH4(
-				TEXTURE3D_ARGS(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
-				surfaceWS.position, surfaceWS.normal,
+				TEXTURE3D_ARGS(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH), surfaceWS.position, surfaceWS.normal,
 				unity_ProbeVolumeWorldToObject,
 				unity_ProbeVolumeParams.y, unity_ProbeVolumeParams.z,
 				unity_ProbeVolumeMin.xyz, unity_ProbeVolumeSizeInv.xyz
@@ -73,6 +75,7 @@ float3 SampleLightProbe (Surface surfaceWS) {
 
 GI GetGI (float2 lightMapUV, Surface surfaceWS) {
 	GI gi;
+	// gi就是diffuse，是lightmap和lightprobo组合起来的
 	gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbe(surfaceWS);
 	return gi;
 }
