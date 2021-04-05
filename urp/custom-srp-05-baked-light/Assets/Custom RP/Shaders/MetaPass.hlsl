@@ -6,6 +6,8 @@
 #include "../ShaderLibrary/Light.hlsl"
 #include "../ShaderLibrary/BRDF.hlsl"
 
+// https://zhuanlan.zhihu.com/p/337121368
+// 设置了X标志，则要求使用漫反射率
 bool4 unity_MetaFragmentControl;
 float unity_OneOverOutputBoost;
 float unity_MaxOutputValue;
@@ -39,11 +41,13 @@ float4 MetaPassFragment (Varyings input) : SV_TARGET {
 	surface.smoothness = GetSmoothness(input.baseUV);
 	BRDF brdf = GetBRDF(surface);
 	float4 meta = 0.0;
+	// x表示使用漫反射烘焙
 	if (unity_MetaFragmentControl.x) {
 		meta = float4(brdf.diffuse, 1.0);
 		meta.rgb += brdf.specular * brdf.roughness * 0.5;
 		meta.rgb = min(PositivePow(meta.rgb, unity_OneOverOutputBoost), unity_MaxOutputValue);
 	}
+	// x表示使用自发光烘焙
 	else if (unity_MetaFragmentControl.y) {
 		meta = float4(GetEmission(input.baseUV), 1.0);
 	}

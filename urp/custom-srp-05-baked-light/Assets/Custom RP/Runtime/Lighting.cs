@@ -47,6 +47,7 @@ public class Lighting {
 	}
 
 	void SetupLights () {
+		// 如果仅仅是bake类型的光源，这里不包含的
 		NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
 		int dirLightCount = 0;
 		for (int i = 0; i < visibleLights.Length; i++) {

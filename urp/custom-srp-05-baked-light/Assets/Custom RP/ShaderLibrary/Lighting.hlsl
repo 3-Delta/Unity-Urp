@@ -20,6 +20,7 @@ float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
 
 	// 有了GI：
 	float3 color = gi.diffuse * brdf.diffuse;
+	// 如果都是bake类型的光源，则这里没有任何光源的计算
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {
 		Light light = GetDirectionalLight(i, surfaceWS, shadowData);
 		color += GetLighting(surfaceWS, brdf, light);

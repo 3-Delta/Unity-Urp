@@ -94,6 +94,8 @@ public class Shadows {
 	}
 
 	public void Render () {
+		// 如果都是bake类型的光源或者被裁减之后没有光源
+		// 则不会有shadowmap的绘制过程
 		if (shadowedDirLightCount > 0) {
 			RenderDirectionalShadows();
 		}

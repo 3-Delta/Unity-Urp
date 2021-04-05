@@ -7,6 +7,7 @@ CBUFFER_START(UnityPerDraw)
 	float4 unity_LODFade;
 	real4 unity_WorldTransformParams;
 
+	// 动态物体在lightprobo中检索shadow
 	float4 unity_ProbesOcclusion;
 
 	float4 unity_LightmapST;
