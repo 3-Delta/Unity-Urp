@@ -29,10 +29,12 @@ struct GI {
 };
 
 // 采样lightmap
+// 如何知道是哪张lightmap纹理？
 float3 SampleLightMap (float2 lightMapUV) {
 	#if defined(LIGHTMAP_ON)
   		return SampleSingleLightmap(
 			TEXTURE2D_ARGS(unity_Lightmap, samplerunity_Lightmap), lightMapUV,
+			// 这里其实就是 * xy + zw的关系，因为上面已经处理了，所以这里设置为（1， 1， 0， 0）
 			float4(1.0, 1.0, 0.0, 0.0),
 			#if defined(UNITY_LIGHTMAP_FULL_HDR)
 				false,

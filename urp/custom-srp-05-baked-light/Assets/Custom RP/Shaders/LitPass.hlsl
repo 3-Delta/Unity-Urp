@@ -12,6 +12,9 @@ struct Attributes {
 	float3 positionOS : POSITION;
 	float3 normalOS : NORMAL;
 	float2 baseUV : TEXCOORD0;
+	// https://www.xuanyusong.com/archives/4633
+	// 烘焙Lightmap以后unity会自动给参与烘焙的所有mesh添加uv2的属性，例如，三角形每个顶点都会有UV2它记录着这个每个顶点对应Lightmap图中的UV值
+	// 这样拥有3个顶点的三角形面就可以通过UV2在Lightmap中线性采样烘焙颜色了。
 	GI_ATTRIBUTE_DATA	// float2 lightMapUV : TEXCOORD1;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
