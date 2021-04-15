@@ -63,6 +63,7 @@ struct ShadowData {
 	ShadowMask shadowMask;
 };
 
+// shadowmask的静态阴影和shadpwmap的动态阴影混合，这样子可以实现：maxShadowSistance之外显示阴影
 float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {
 	float baked = GetBakedShadow(global.shadowMask, shadowMaskChannel);
 	if (global.shadowMask.always) {
