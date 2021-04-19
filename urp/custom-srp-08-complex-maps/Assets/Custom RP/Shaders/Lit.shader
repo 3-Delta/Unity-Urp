@@ -1,7 +1,9 @@
 ﻿Shader "Custom RP/Lit" {
 	
 	Properties {
+		// 基础纹理
 		_BaseMap("Texture", 2D) = "white" {}
+		// 基础颜色
 		_BaseColor("Color", Color) = (0.5, 0.5, 0.5, 1.0)
 		_Cutoff ("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
 		[Toggle(_CLIPPING)] _Clipping ("Alpha Clipping", Float) = 0

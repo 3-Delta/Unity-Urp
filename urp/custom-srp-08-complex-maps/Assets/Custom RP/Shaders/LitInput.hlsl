@@ -5,6 +5,8 @@ TEXTURE2D(_BaseMap);
 TEXTURE2D(_MaskMap);
 TEXTURE2D(_NormalMap);
 TEXTURE2D(_EmissionMap);
+
+// 采样器
 SAMPLER(sampler_BaseMap);
 
 TEXTURE2D(_DetailMap);
@@ -14,6 +16,7 @@ SAMPLER(sampler_DetailMap);
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _DetailMap_ST)
+
 	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Cutoff)
@@ -23,6 +26,7 @@ UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Fresnel)
 	UNITY_DEFINE_INSTANCED_PROP(float, _DetailAlbedo)
 	UNITY_DEFINE_INSTANCED_PROP(float, _DetailSmoothness)
+
 	UNITY_DEFINE_INSTANCED_PROP(float, _DetailNormalScale)
 	UNITY_DEFINE_INSTANCED_PROP(float, _NormalScale)
 UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
@@ -77,8 +81,7 @@ float4 GetBase (InputConfig c) {
 	if (c.useDetail) {
 		float detail = GetDetail(c).r * INPUT_PROP(_DetailAlbedo);
 		float mask = GetMask(c).b;
-		map.rgb =
-			lerp(sqrt(map.rgb), detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
+		map.rgb = lerp(sqrt(map.rgb), detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
 		map.rgb *= map.rgb;
 	}
 	
@@ -101,6 +104,7 @@ float3 GetNormalTS (InputConfig c) {
 }
 
 float3 GetEmission (InputConfig c) {
+	// 自发光纹理颜色 * 自发光颜色
 	float4 map = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, c.baseUV);
 	float4 color = INPUT_PROP(_EmissionColor);
 	return map.rgb * color.rgb;
@@ -112,12 +116,17 @@ float GetCutoff (InputConfig c) {
 
 float GetMetallic (InputConfig c) {
 	float metallic = INPUT_PROP(_Metallic);
+	// MODS：metallic, Occlusion, Detail, Smoothness
+	// metallic在mask map中的r 
 	metallic *= GetMask(c).r;
 	return metallic;
 }
 
 float GetOcclusion (InputConfig c) {
+	// 控制遮挡纹理强度
 	float strength = INPUT_PROP(_Occlusion);
+	// MODS：metallic, Occlusion, Detail, Smoothness
+	// g
 	float occlusion = GetMask(c).g;
 	occlusion = lerp(occlusion, 1.0, strength);
 	return occlusion;
@@ -130,8 +139,7 @@ float GetSmoothness (InputConfig c) {
 	if (c.useDetail) {
 		float detail = GetDetail(c).b * INPUT_PROP(_DetailSmoothness);
 		float mask = GetMask(c).b;
-		smoothness =
-			lerp(smoothness, detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
+		smoothness = lerp(smoothness, detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
 	}
 	
 	return smoothness;
