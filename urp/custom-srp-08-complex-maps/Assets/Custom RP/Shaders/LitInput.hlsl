@@ -81,6 +81,7 @@ float4 GetBase (InputConfig c) {
 	if (c.useDetail) {
 		float detail = GetDetail(c).r * INPUT_PROP(_DetailAlbedo);
 		float mask = GetMask(c).b;
+		// 因为在线性空间下计算，所以暗部会缺少，所以这里使用平方的形式，增加暗部，减少亮部
 		map.rgb = lerp(sqrt(map.rgb), detail < 0.0 ? 0.0 : 1.0, abs(detail) * mask);
 		map.rgb *= map.rgb;
 	}

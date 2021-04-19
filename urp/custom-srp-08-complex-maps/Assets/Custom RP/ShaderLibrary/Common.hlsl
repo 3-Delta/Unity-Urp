@@ -23,6 +23,7 @@ float Square (float x) {
 	return x * x;
 }
 
+// 距离平方
 float DistanceSquared(float3 pA, float3 pB) {
 	return dot(pA - pB, pA - pB);
 }
@@ -34,6 +35,7 @@ void ClipLOD (float2 positionCS, float fade) {
 	#endif
 }
 
+// 因为normal在切线空间下，z始终未正，那么久可以只根据x,y计算得到z,也就是可以压缩纹理
 float3 DecodeNormal (float4 sample, float scale) {
 	#if defined(UNITY_NO_DXT5nm)
 	    return UnpackNormalRGB(sample, scale);
@@ -43,8 +45,8 @@ float3 DecodeNormal (float4 sample, float scale) {
 }
 
 float3 NormalTangentToWorld (float3 normalTS, float3 normalWS, float4 tangentWS) {
-	float3x3 tangentToWorld =
-		CreateTangentToWorld(normalWS, tangentWS.xyz, tangentWS.w);
+	// return real3x3(tangent, bitangent, normal),组成一个worls2tagent的矩阵
+	float3x3 tangentToWorld = CreateTangentToWorld(normalWS, tangentWS.xyz, tangentWS.w);
 	return TransformTangentToWorld(normalTS, tangentToWorld);
 }
 

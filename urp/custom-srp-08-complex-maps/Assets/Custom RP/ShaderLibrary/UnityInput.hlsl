@@ -1,9 +1,12 @@
 ﻿#ifndef CUSTOM_UNITY_INPUT_INCLUDED
 #define CUSTOM_UNITY_INPUT_INCLUDED
 
+// 每个渲染物体都需要的
+// Permat则是多个渲染物体共享的
 CBUFFER_START(UnityPerDraw)
 	float4x4 unity_ObjectToWorld;
 	float4x4 unity_WorldToObject;
+	// lodgroup的fade的因子
 	float4 unity_LODFade;
 	real4 unity_WorldTransformParams;
 
