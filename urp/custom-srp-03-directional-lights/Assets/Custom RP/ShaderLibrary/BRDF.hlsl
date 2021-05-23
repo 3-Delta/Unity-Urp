@@ -12,6 +12,9 @@ struct BRDF {
 // 非金属的反射率有所不同，但平均约为0.04
 #define MIN_REFLECTIVITY 0.04
 
+// 反射率是指接收光的时候，有多少比例的光被反射，比如黑色的东西反射率就是0也就是不反射都是吸收了
+// 所以这里有一个最小反射率
+// 越靠近金属，ret越小
 float OneMinusReflectivity (float metallic) {
 	float range = 1.0 - MIN_REFLECTIVITY;
 	// (1.0 - MIN_REFLECTIVITY) * (1 - metallic)
@@ -39,6 +42,7 @@ BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	return brdf;
 }
 
+// 高光强度
 float SpecularStrength (Surface surface, BRDF brdf, Light light) {
 	float3 h = SafeNormalize(light.direction + surface.viewDirection);
 	float nh2 = Square(saturate(dot(surface.normal, h)));

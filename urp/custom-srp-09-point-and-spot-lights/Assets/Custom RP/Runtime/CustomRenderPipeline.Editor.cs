@@ -18,6 +18,7 @@ public partial class CustomRenderPipeline {
 		Lightmapping.ResetDelegate();
 	}
 
+	// 烘培delegate,因为点光源等直接bake会明显过亮，是因为使用了builtin的烘培形式，所以需要手动告知Unity
 	static Lightmapping.RequestLightsDelegate lightsDelegate =
 		(Light[] lights, NativeArray<LightDataGI> output) => {
 			var lightData = new LightDataGI();

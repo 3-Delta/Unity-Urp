@@ -135,6 +135,7 @@ public class Lighting {
 
 	void SetupDirectionalLight (int index, ref VisibleLight visibleLight) {
 		dirLightColors[index] = visibleLight.finalColor;
+		// 平行光影响所有obj，而且没有位置，只有方向，所以这里是2，也就是forward,也就是z方向
 		dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
 		dirLightShadowData[index] =
 			shadows.ReserveDirectionalShadows(visibleLight.light, index);
@@ -142,6 +143,7 @@ public class Lighting {
 
 	void SetupPointLight (int index, ref VisibleLight visibleLight) {
 		otherLightColors[index] = visibleLight.finalColor;
+		// 点光源有位置，方向是360辐射，所以这里需要明确位置，方便计算surface到光源的方向
 		Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
 		position.w =
 			1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
@@ -153,6 +155,7 @@ public class Lighting {
 
 	void SetupSpotLight (int index, ref VisibleLight visibleLight) {
 		otherLightColors[index] = visibleLight.finalColor;
+		// 聚光灯是一个有固定的锥形方向辐射的点光源，所以需要计算surface到光源位置的方向是否在辐射角度范围之内，计算使用dot计算
 		Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
 		position.w =
 			1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);

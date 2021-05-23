@@ -63,12 +63,16 @@ public class Lighting {
 		// finalColor是强度*乘过的
 		// visibleLight.finalColor == light.intensity * light.color.linear;
 
+		// 	light.color就是光源颜色， 必须乘以强度，才是最终的 颜色
+
 		// 颜色是linearspace下的颜色
 		dirLightColors[index] = visibleLight.finalColor;
 
 		// https://zhuanlan.zhihu.com/p/163360207
+		// https://www.zhihu.com/question/452040005/answer/1810783856
+		// 最后一列代表的是模型中心点的世界坐标
 		// localspace的光源的forward方向
-		// 方向：远离光源的方向，所以是负数
+		// 方向：指向光源的方向，所以是负数
 		dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
 	}
 }

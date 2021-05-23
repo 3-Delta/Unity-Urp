@@ -5,11 +5,13 @@
 #define MAX_OTHER_LIGHT_COUNT 64
 
 CBUFFER_START(_CustomLight)
+	// 平行光
 	int _DirectionalLightCount;
 	float4 _DirectionalLightColors[MAX_DIRECTIONAL_LIGHT_COUNT];
 	float4 _DirectionalLightDirections[MAX_DIRECTIONAL_LIGHT_COUNT];
 	float4 _DirectionalLightShadowData[MAX_DIRECTIONAL_LIGHT_COUNT];
 
+	// 其他光源
 	int _OtherLightCount;
 	float4 _OtherLightColors[MAX_OTHER_LIGHT_COUNT];
 	float4 _OtherLightPositions[MAX_OTHER_LIGHT_COUNT];
@@ -67,6 +69,7 @@ Light GetOtherLight (int index, Surface surfaceWS, ShadowData shadowData) {
 	light.color = _OtherLightColors[index].rgb;
 	float3 ray = _OtherLightPositions[index].xyz - surfaceWS.position;
 	light.direction = normalize(ray);
+	// 平方的反比衰减
 	float distanceSqr = max(dot(ray, ray), 0.00001);
 	float rangeAttenuation = Square(
 		saturate(1.0 - Square(distanceSqr * _OtherLightPositions[index].w))

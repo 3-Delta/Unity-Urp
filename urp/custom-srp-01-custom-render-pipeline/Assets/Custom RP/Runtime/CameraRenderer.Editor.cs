@@ -45,6 +45,8 @@ partial class CameraRenderer {
 		) {
 			overrideMaterial = errorMaterial
 		};
+		
+		// 设置其他passName
 		for (int i = 1; i < legacyShaderTagIds.Length; i++) {
 			drawingSettings.SetShaderPassName(i, legacyShaderTagIds[i]);
 		}
