@@ -43,8 +43,8 @@ public class Shadows {
         public float nearPlaneOffset;
     }
 
-    int shadowedDirLightCount;
-    ShadowedDirectionalLight[] shadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirLightCount];
+    private int shadowedDirLightCount;
+    private ShadowedDirectionalLight[] shadowedDirectionalLights = new ShadowedDirectionalLight[maxShadowedDirLightCount];
 
     CommandBuffer buffer = new CommandBuffer {
         name = bufferName
@@ -106,10 +106,7 @@ public class Shadows {
             // https://catlikecoding.com/unity/tutorials/custom-srp/directional-shadows/
             // 为什么还需要申请dummy的shadowmap呢？
             // 在webgl2.0情况下，如果material不提供纹理的话，会失败
-            buffer.GetTemporaryRT(
-                dirShadowAtlasId, 1, 1,
-                32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
-            );
+            buffer.GetTemporaryRT(dirShadowAtlasId, 1, 1, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
         }
     }
 
@@ -122,10 +119,7 @@ public class Shadows {
         );
 
         // 设置shadowmap为rendertarget,这样子之后的rendertarget就不是相机了。
-        buffer.SetRenderTarget(
-            dirShadowAtlasId,
-            RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store
-        );
+        buffer.SetRenderTarget(dirShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         // 因为只需要depth
         buffer.ClearRenderTarget(true, false, Color.clear);
         buffer.BeginSample(bufferName);
