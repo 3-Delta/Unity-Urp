@@ -80,20 +80,11 @@ public class Shadows {
             // 有可能出现light只影响到了maxShadowDistance外的渲染对象
             cullingResults.GetShadowCasterBounds(visibleLightIndex, out Bounds b)
         ) {
-            shadowedDirectionalLights[shadowedDirLightCount] =
-                new ShadowedDirectionalLight {
-                    visibleLightIndex = visibleLightIndex,
-                    slopeScaleBias = light.shadowBias,
-                    nearPlaneOffset = light.shadowNearPlane
-                };
-            // 1.阴影强度
+            shadowedDirectionalLights[shadowedDirLightCount] = new ShadowedDirectionalLight {visibleLightIndex = visibleLightIndex, slopeScaleBias = light.shadowBias, nearPlaneOffset = light.shadowNearPlane };
+            // 1. 阴影强度
             // 2. tileIndexStartIndex
-            // 3.阴影法线偏移
-            return new Vector3(
-                light.shadowStrength,
-                settings.directional.cascadeCount * shadowedDirLightCount++,
-                light.shadowNormalBias
-            );
+            // 3. 阴影法线偏移
+            return new Vector3(light.shadowStrength, settings.directional.cascadeCount * shadowedDirLightCount++, light.shadowNormalBias);
         }
         return Vector3.zero;
     }
@@ -112,20 +103,22 @@ public class Shadows {
 
     void RenderDirectionalShadows () {
         int atlasSize = (int)settings.directional.atlasSize;
-        // 动态创建shadowmap 纹理
-        buffer.GetTemporaryRT(
-            dirShadowAtlasId, atlasSize, atlasSize,
-            32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
-        );
+        // 动态创建shadowmap的矩形纹理
+        buffer.GetTemporaryRT(dirShadowAtlasId, atlasSize, atlasSize, 32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap);
 
         // 设置shadowmap为rendertarget,这样子之后的rendertarget就不是相机了。
         buffer.SetRenderTarget(dirShadowAtlasId, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
         // 因为只需要depth
         buffer.ClearRenderTarget(true, false, Color.clear);
+
+        #region 形成一个块
         buffer.BeginSample(bufferName);
         ExecuteBuffer();
 
         // shadowmap分块总块数
+        // 因为允许的最大shadowedDirLightCount就是4，而且允许的最大cascadeCount也是4，也就是最大允许16
+        // 那么最多就按照每行4个切块， 否则就是每行2个，否则就是每行1个
+        // 因为是矩形要求，所以只能是2的幂次
         int tiles = shadowedDirLightCount * settings.directional.cascadeCount;
 
         int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
@@ -142,17 +135,14 @@ public class Shadows {
         buffer.SetGlobalMatrixArray(dirShadowMatricesId, dirShadowMatrices);
 
         float f = 1f - settings.directional.cascadeFade;
-        buffer.SetGlobalVector(
-            shadowDistanceFadeId, new Vector4(
-                1f / settings.maxDistance, 1f / settings.distanceFade,
-                1f / (1f - f * f)
-            )
-        );
+        buffer.SetGlobalVector(shadowDistanceFadeId, new Vector4(1f / settings.maxDistance, 1f / settings.distanceFade, 1f / (1f - f * f)));
         SetKeywords(directionalFilterKeywords, (int)settings.directional.filter - 1);
         SetKeywords(cascadeBlendKeywords, (int)settings.directional.cascadeBlend - 1);
         buffer.SetGlobalVector(shadowAtlasSizeId, new Vector4(atlasSize, 1f / atlasSize));
 
         buffer.EndSample(bufferName);
+        #endregion
+
         ExecuteBuffer();
     }
 
@@ -245,9 +235,7 @@ public class Shadows {
         // 二维数组的行列
         Vector2 offset = new Vector2(index % split, index / split);
         // 设置视口
-        buffer.SetViewport(new Rect(
-            offset.x * tileSize, offset.y * tileSize, tileSize, tileSize
-        ));
+        buffer.SetViewport(new Rect(offset.x * tileSize, offset.y * tileSize, tileSize, tileSize));
         return offset;
     }
 

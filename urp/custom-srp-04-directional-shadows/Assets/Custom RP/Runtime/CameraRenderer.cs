@@ -34,7 +34,8 @@ public partial class CameraRenderer {
 		if (!Cull(shadowSettings.maxDistance)) {
 			return;
 		}
-		
+
+		// BeginSample/EndSample 主要是为了在FrameDebugger以及Profiler中形成一个块
 		buffer.BeginSample(SampleName);
 		ExecuteBuffer();
 		// 先渲染阴影
