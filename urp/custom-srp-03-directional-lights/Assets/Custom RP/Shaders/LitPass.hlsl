@@ -88,15 +88,19 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
 	surface.color = base.rgb;
 	surface.alpha = base.a;
+
+	// 设置 _Metallic/_Smoothness
 	surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
-	surface.smoothness =
-		UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
+	surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
 	
+	// 获取brdf的参数数据
 	#if defined(_PREMULTIPLY_ALPHA)
 		BRDF brdf = GetBRDF(surface, true);
 	#else
 		BRDF brdf = GetBRDF(surface);
 	#endif
+
+	// 利用brdf计算surface光照
 	float3 color = GetLighting(surface, brdf);
 	return float4(color, surface.alpha);
 }

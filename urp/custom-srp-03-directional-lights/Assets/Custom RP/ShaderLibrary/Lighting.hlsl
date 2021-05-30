@@ -7,9 +7,12 @@ float3 IncomingLight (Surface surface, Light light) {
 	return saturate(dot(surface.normal, light.direction)) * light.color;
 }
 
+// 这里使用来pbr的brdf的公式计算光照
+// 涉及到brdf, 入射光，表面属性
 // 单个光源对于pixel的影响
 float3 GetLighting (Surface surface, BRDF brdf, Light light) {
 	float3 il = IncomingLight(surface, light);
+	// 输入光源 * brdf系数
 	return il * DirectBRDF(surface, brdf, light);
 }
 
