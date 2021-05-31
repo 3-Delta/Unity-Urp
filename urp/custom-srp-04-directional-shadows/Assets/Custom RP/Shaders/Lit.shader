@@ -48,7 +48,11 @@
 				"LightMode" = "ShadowCaster"
 			}
 
-			ColorMask 0
+			ColorMask 0	
+			// 只写入depth，不写入color
+			// framedebugger观察到：
+			// blend one zero也就是直接覆盖
+			// zwrite on, ztest less equal, cull back
 
 			HLSLPROGRAM
 			#pragma target 3.5

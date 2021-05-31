@@ -57,25 +57,29 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	#endif
 
 	Surface surface;
-	surface.position = input.positionWS;
 	surface.normal = normalize(input.normalWS);
 	// frag指向camera的方向
+	// UnityInput.hlsl中获取，是Unity传输给GPU的，包括一些矩阵传输
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
-	// 不是到camera位置的距离，而是到camera的nearPlane的距离
-	surface.depth = -TransformWorldToView(input.positionWS).z;
 	surface.color = base.rgb;
 	surface.alpha = base.a;
 	surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
 	surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
-	
+
+	// 新增below3
+	surface.position = input.positionWS;
+	// 不是到camera位置的距离，而是到camera的nearPlane的距离
+	surface.depth = -TransformWorldToView(input.positionWS).z;
 	surface.dither = InterleavedGradientNoise(input.positionCS.xy, 0);
 	
 	// 下面计算中包含有shadowmap的计算
+	// 获取brdf的参数数据
 	#if defined(_PREMULTIPLY_ALPHA)
 		BRDF brdf = GetBRDF(surface, true);
 	#else
 		BRDF brdf = GetBRDF(surface);
 	#endif
+	// 利用brdf计算surface光照
 	float3 color = GetLighting(surface, brdf);
 	return float4(color, surface.alpha);
 }

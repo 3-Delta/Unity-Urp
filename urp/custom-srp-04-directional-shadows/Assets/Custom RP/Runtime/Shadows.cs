@@ -121,12 +121,19 @@ public class Shadows {
         // 因为是矩形要求，所以只能是2的幂次
         int tiles = shadowedDirLightCount * settings.directional.cascadeCount;
 
-        int split = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
-        int tileSize = atlasSize / split;
+        // atlas中每行几个
+        // 比如2light * 3cascade, 还是atlas中每行4个
+        int countPerLine = tiles <= 1 ? 1 : tiles <= 4 ? 2 : 4;
+        int tileSize = atlasSize / countPerLine;
 
         for (int i = 0; i < shadowedDirLightCount; i++) {
             // 每个shadowlight都渲染一次shadowmap
-            RenderDirectionalShadows(i, split, tileSize);
+            //string name = "DirShadowLight:" + i.ToString();
+            //buffer.BeginSample(name);
+
+            RenderDirectionalShadows(i, countPerLine, tileSize);
+
+            //buffer.EndSample(name);
         }
 
         buffer.SetGlobalInt(cascadeCountId, settings.directional.cascadeCount);
@@ -157,40 +164,50 @@ public class Shadows {
         }
     }
 
-    void RenderDirectionalShadows (int lightIndex, int split, int tileSize) {
+    void RenderDirectionalShadows (int lightIndex, int countPerLine, int tileSize) {
         ShadowedDirectionalLight light = shadowedDirectionalLights[lightIndex];
         var shadowSettings = new ShadowDrawingSettings(cullingResults, light.visibleLightIndex);
         int cascadeCount = settings.directional.cascadeCount;
-        int tileOffset = lightIndex * cascadeCount;
+        int startTileIndexOfThisLight = lightIndex * cascadeCount;
         Vector3 ratios = settings.directional.CascadeRatios;
         float cullingFactor = Mathf.Max(0f, 0.8f - settings.directional.cascadeFade);
 
         // 每个光源的每个级联都要渲染一次shadowmap,而每个级联的vp矩阵肯定不一样
+        // 2light * 3cascade，atlas中每行4个
         for (int i = 0; i < cascadeCount; i++) {
             // 计算投影的时候，需要将一个虚拟camera放置到光源位置，得到相关vp矩阵
             cullingResults.ComputeDirectionalShadowMatricesAndCullingPrimitives(
                 light.visibleLightIndex, i, cascadeCount, ratios, tileSize,
-                light.nearPlaneOffset, 
-                out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
+                light.nearPlaneOffset, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix, out ShadowSplitData splitData);
 
             splitData.shadowCascadeBlendCullingFactor = cullingFactor;
+
             shadowSettings.splitData = splitData;
+
             // 每个光源的cull球设置都是一样的，所以后续光源不需要重复设置
             if (lightIndex == 0) {
                 SetCascadeData(i, splitData.cullingSphere, tileSize);
             }
-            int tileIndex = tileOffset + i;
-            var viewport = SetTileViewport(tileIndex, split, tileSize);
-            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, viewport, split);
-            // 设置每个级联的vp矩阵
+            int tileIndex = startTileIndexOfThisLight + i;
+            // 将shadowmap中每cascade映射到一个个矩形区间中
+            var viewport = SetTileViewport(tileIndex, countPerLine, tileSize);
+            // 从光源的ws->ss 转换为 光源的ws->某个tile的ss, 其实我以为设置了Viewport就可以了，其实不行
+            // viewport可能是一个很大的sreen隐射到一个小区域，而设置vp矩阵则可以控制原始screen的大小
+            dirShadowMatrices[tileIndex] = ConvertToAtlasMatrix(projectionMatrix * viewMatrix, viewport, countPerLine);
+            // 设置每个级联的vp矩阵，需要结合上下文，这里是针对shadow的cascade, 也可以用于其他上下文环境中。
+            // 比如设置相机的vp为UI相机的vp
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
             // 设置depthBias,而不是normalBias
             // 而且是每个光源都会重新设置一次，因为每一个光源light的设置不一样
             buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
             ExecuteBuffer();
 
-            // 阴影绘制核心操作
+            //string cascadeLevel = "Cascade:" + i.ToString();
+            //buffer.BeginSample(cascadeLevel);
+            // 阴影绘制核心操作,只对于shadowcasterpass的物体有效
             context.DrawShadows(ref shadowSettings);
+            //buffer.EndSample(cascadeLevel);
+
             buffer.SetGlobalDepthBias(0f, 0f);
         }
     }
@@ -208,14 +225,14 @@ public class Shadows {
     // worldspace -> shadowspace
     // (Mvp->s * VP) -> shadowspace
     // 世界空间中的位置在阴影贴图中的纹理坐标, shadowmap是个atlas,所以还需要知道uv信息
-    Matrix4x4 ConvertToAtlasMatrix (Matrix4x4 m, Vector2 offset, int split) {
+    Matrix4x4 ConvertToAtlasMatrix (Matrix4x4 m, Vector2 offset, int countPerLine) {
         if (SystemInfo.usesReversedZBuffer) {
             m.m20 = -m.m20;
             m.m21 = -m.m21;
             m.m22 = -m.m22;
             m.m23 = -m.m23;
         }
-        float scale = 1f / split;
+        float scale = 1f / countPerLine;
         m.m00 = (0.5f * (m.m00 + m.m30) + offset.x * m.m30) * scale;
         m.m01 = (0.5f * (m.m01 + m.m31) + offset.x * m.m31) * scale;
         m.m02 = (0.5f * (m.m02 + m.m32) + offset.x * m.m32) * scale;
@@ -231,10 +248,13 @@ public class Shadows {
         return m;
     }
 
-    Vector2 SetTileViewport (int index, int split, float tileSize) {
+    Vector2 SetTileViewport (int index, int countPerLine, float tileSize) {
         // 二维数组的行列
-        Vector2 offset = new Vector2(index % split, index / split);
-        // 设置视口
+        int row = index / countPerLine;
+        int col = index % countPerLine;
+        Vector2 offset = new Vector2(col, row);
+        // 这个结果计算出来应该是旋转90的吧！！！
+        // qustion??? 这个结果计算出来应该是旋转90的吧！！！
         buffer.SetViewport(new Rect(offset.x * tileSize, offset.y * tileSize, tileSize, tileSize));
         return offset;
     }

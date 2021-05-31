@@ -84,7 +84,7 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	Surface surface;
 	// 世界坐标法线
 	surface.normal = normalize(input.normalWS);
-	// 世界坐标 pixel指向相机的方向
+	// 世界坐标 pixel指向相机的方向， UnityInput.hlsl中获取，是Unity传输给GPU的，包括一些矩阵传输
 	surface.viewDirection = normalize(_WorldSpaceCameraPos - input.positionWS);
 	surface.color = base.rgb;
 	surface.alpha = base.a;

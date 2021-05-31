@@ -14,4 +14,6 @@ float4x4 glstate_matrix_projection;
 
 float3 _WorldSpaceCameraPos;
 
+// 后面关注一下，Unity是怎么传输数据给到gpu这边的
+
 #endif
