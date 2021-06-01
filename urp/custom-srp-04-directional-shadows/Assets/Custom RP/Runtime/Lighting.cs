@@ -13,7 +13,7 @@ public class Lighting {
 		dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
 		dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
 
-		// 每个dir光源的shadow数据收集
+		// 每个dir光源的shadow阴影数据收集
 		dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
 	static Vector4[]

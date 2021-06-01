@@ -26,11 +26,13 @@ TEXTURE2D_SHADOW(_DirectionalShadowAtlas);
 #define SHADOW_SAMPLER sampler_linear_clamp_compare
 SAMPLER_CMP(SHADOW_SAMPLER);
 
+// unity的cs传递过来
 CBUFFER_START(_CustomShadows)
 	// 级联数
 	int _CascadeCount;
 	float4 _CascadeCullingSpheres[MAX_CASCADE_COUNT]; // cullingSphere半径的平方
 	float4 _CascadeData[MAX_CASCADE_COUNT];
+
 	// world->shadow的矩阵
 	float4x4 _DirectionalShadowMatrices[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT * MAX_CASCADE_COUNT];
 	float4 _ShadowAtlasSize; // new Vector4(atlasSize, 1f / atlasSize)
@@ -40,7 +42,7 @@ CBUFFER_END
 struct ShadowData {
 	int cascadeIndex;
 	float cascadeBlend;
-	float strength;
+	float strength;	// shadowStrength
 };
 
 // 处理fade渐变，也就是cascade突变，或者超过最大distance的时候
@@ -63,6 +65,7 @@ ShadowData GetShadowData_ (Surface surfaceWS) {
 		}
 	}
 }
+
 // lighting中获取shadowmap应该使用哪个级联
 ShadowData GetShadowData (Surface surfaceWS) {
 	ShadowData data;
@@ -111,18 +114,24 @@ ShadowData GetShadowData (Surface surfaceWS) {
 }
 
 struct DirectionalShadowData {
-	float strength;
+	float strength;	 // shadowStrength
 	int tileIndex;
 	float normalBias;
 };
 
 // positionSTS是shadowspace的位置
-// 获取某uv的shadowmap的depth
+// 获取positionSTS对应的vertex是否被遮挡
+// positionSTS其实就是shadowspace的Cube立体区域中的某个位置
 float SampleDirectionalShadowAtlas (float3 positionSTS) {
+	// https://blog.csdn.net/weixin_43675955/article/details/85226485
+	// SAMPLE_TEXTURE2D_SHADOW 因为shadowmap没有mipmap,所以采样的就是0级，而且其实是使用xy坐标的shadowmap的depth和z比较大小
+	// 返回值要么0， 要么1，也就是要么被遮挡，要么不被遮挡
+	// 其实bool可以表达
 	return SAMPLE_TEXTURE2D_SHADOW(_DirectionalShadowAtlas, SHADOW_SAMPLER, positionSTS);
 }
 
-// 利用pcf机制对于positionSTS周边的filterSize*filterSize的矩形进行计算depth的平均值，也就是最终结果在（0， 1）之间
+// 利用pcf机制对于positionSTS周边的filterSize*filterSize的矩形进行遮挡情况的计算
+// 获取filtersize区域内，每个vertex的positionSTS对应的vertex是否被遮挡
 // 目的是为了阴影锯齿 或者 软阴影
 float FilterDirectionalShadow (float3 positionSTS) {
 	#if defined(DIRECTIONAL_FILTER_SETUP)
@@ -133,6 +142,7 @@ float FilterDirectionalShadow (float3 positionSTS) {
 		DIRECTIONAL_FILTER_SETUP(size, positionSTS.xy, weights, positions);
 		float shadow = 0;
 		// 片段完全被阴影覆盖，那么我们将得到零，而如果根本没有阴影，那么我们将得到一。之间的值表示片段被部分遮挡。
+		// 也就是概率
 		for (int i = 0; i < DIRECTIONAL_FILTER_SAMPLES; i++) {
 			shadow += weights[i] * SampleDirectionalShadowAtlas(float3(positions[i].xy, positionSTS.z));
 		}
@@ -144,15 +154,16 @@ float FilterDirectionalShadow (float3 positionSTS) {
 }
 
 // 最简单的情况
-// 返回shadowmap的depth
+// 返回positionSTS对应的vertex是否被遮挡
 float GetDirectionalShadowAttenuation_ (DirectionalShadowData directional, Surface surfaceWS) {
     float3 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position /*+ normalBias*/, 1.0)).xyz;
 	float shadow = FilterDirectionalShadow(positionSTS);
 	return shadow;
 }
 
-// 返回shadowmap的depth
-// 有阴影，frag为1，无阴影，frag为0，部分阴影就是（0， 1），也就是lerp(1.0, depth, directional.strength)
+// 某个顶点是否被遮挡， 也有可能为了软阴影做的部分遮挡的效果
+// 渲染这个顶点的时候，如果法线被遮挡，则直接显示阴影的颜色，否则就是正常的brdf的计算颜色
+// 有阴影，frag为1，无阴影，frag为0，部分阴影就是（0， 1），也就是lerp(1.0, shadow, directional.strength)
 float GetDirectionalShadowAttenuation (DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
 	#if !defined(_RECEIVE_SHADOWS)
 		return 1.0;
@@ -163,18 +174,27 @@ float GetDirectionalShadowAttenuation (DirectionalShadowData directional, Shadow
 	// 每个级联应该使用的不是相同的pcfFilterSize
 	float filterSize = _CascadeData[global.cascadeIndex].y;
 	// normalBias的用法：* surfaceWS.normal，然后 + surfaceWS.position
+	// normalBias原来是修改vertex的位置，朝着normal方向偏移，因为是 surfaceWS.position + normalBias，相当于让vertex靠近光源
+	// 也就意味着zaishadowspace中，depth越小，越不被遮挡
 	float3 normalBias = surfaceWS.normal * (directional.normalBias * filterSize);
-	// worldspace -> shadowspace
 	float3 positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex], float4(surfaceWS.position + normalBias, 1.0)).xyz;
+	// shadow不是depth， 其实是个bool的是否被遮挡的flag
 	float shadow = FilterDirectionalShadow(positionSTS);
 	
 	// 如果需要级联的混合过度
 	if (global.cascadeBlend < 1.0) {
 		normalBias = surfaceWS.normal * (directional.normalBias * filterSize);
 		// worldspace -> shadowspace
+		// 获取shadowmap中next的tile的position，得到depth
 		positionSTS = mul(_DirectionalShadowMatrices[directional.tileIndex + 1], float4(surfaceWS.position + normalBias, 1.0)).xyz;
-		shadow = lerp(FilterDirectionalShadow(positionSTS), shadow, global.cascadeBlend);
+
+		// 然后对于相邻两个tile的depth 进行lerp
+		float nextTileShadow = FilterDirectionalShadow(positionSTS);
+		float preTileShadow = shadow;
+		shadow = lerp(nextTileShadow, preTileShadow, global.cascadeBlend);
 	}
+
+	// strength作为factor控制遮挡因子在最大1， 最小shadow之间变化
 	return lerp(1.0, shadow, directional.strength);
 }
 

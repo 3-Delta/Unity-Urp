@@ -16,6 +16,7 @@ float3 GetLighting (Surface surface, BRDF brdf, Light light) {
 	return il * DirectBRDF(surface, brdf, light);
 }
 
+// 光照计算入口
 // 多个光源同时影响一个pixel
 float3 GetLighting (Surface surface, BRDF brdf) {
 	float3 color = 0.0;

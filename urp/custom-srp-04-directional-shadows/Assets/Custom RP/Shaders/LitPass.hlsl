@@ -66,7 +66,7 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	surface.metallic = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Metallic);
 	surface.smoothness = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _Smoothness);
 
-	// 新增below3
+	// 新增below 3
 	surface.position = input.positionWS;
 	// 不是到camera位置的距离，而是到camera的nearPlane的距离
 	surface.depth = -TransformWorldToView(input.positionWS).z;

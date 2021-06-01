@@ -208,6 +208,7 @@ public class Shadows {
             context.DrawShadows(ref shadowSettings);
             //buffer.EndSample(cascadeLevel);
 
+            // 还原DepthBias
             buffer.SetGlobalDepthBias(0f, 0f);
         }
     }
@@ -225,6 +226,8 @@ public class Shadows {
     // worldspace -> shadowspace
     // (Mvp->s * VP) -> shadowspace
     // 世界空间中的位置在阴影贴图中的纹理坐标, shadowmap是个atlas,所以还需要知道uv信息
+    // vp矩阵将positionWS转换到ndc中， 这个矩阵将positionWS转换到size=1的CUBE区域中的某个tile块中
+    // 也可以理解为转换到shadowspace
     Matrix4x4 ConvertToAtlasMatrix (Matrix4x4 m, Vector2 offset, int countPerLine) {
         if (SystemInfo.usesReversedZBuffer) {
             m.m20 = -m.m20;

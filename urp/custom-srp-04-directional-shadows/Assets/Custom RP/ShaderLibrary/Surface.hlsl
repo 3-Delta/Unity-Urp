@@ -10,8 +10,8 @@ struct Surface {
 	float smoothness;
 
 	// 新增
-	float3 position;
-	float depth;
+	float3 position;  // ws
+	float depth; // 线性z
 	float dither;
 };
 
