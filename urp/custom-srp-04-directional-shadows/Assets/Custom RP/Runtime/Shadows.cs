@@ -185,6 +185,10 @@ public class Shadows {
             shadowSettings.splitData = splitData;
 
             // 每个光源的cull球设置都是一样的，所以后续光源不需要重复设置
+            // 因为cullsphere其实是针对相机设置的，而不是光源设置的
+            // cascadeCullingSpheres是从cascadeIndex == 0开始的， 所以判断某个vertex在哪个sphere中
+            // 就是从cascadeIndex == 0开始，这样子就避免了 两个sphere有重叠区域，而在重叠区域的vertex到底属于哪个sphere的问题
+            // 始终属于cascadeIndex小的
             if (lightIndex == 0) {
                 SetCascadeData(i, splitData.cullingSphere, tileSize);
             }

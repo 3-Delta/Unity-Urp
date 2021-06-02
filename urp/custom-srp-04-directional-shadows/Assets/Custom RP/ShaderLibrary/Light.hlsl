@@ -45,6 +45,9 @@ Light GetDirectionalLight (int index, Surface surfaceWS, ShadowData shadowData) 
 	// frag的受到阴影的影响
 	// 其实就是这个frag是否在阴影中，也就是是否被其他obj遮挡
 	light.attenuation = GetDirectionalShadowAttenuation(dirShadowData, shadowData, surfaceWS);
+
+	// 查看cullSphere
+	//light.attenuation = shadowData.cascadeIndex * 0.25;
 	return light;
 }
 

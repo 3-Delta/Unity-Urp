@@ -2,7 +2,6 @@
 #define CUSTOM_LIGHTING_INCLUDED
 
 float3 IncomingLight (Surface surface, Light light) {
-	return
 		// 计算衰减 阴影起作用的最后一步是将衰减量纳入光线的强度中
 		// light.attenuation其实是阴影
 		// 这里是将阴影和传统的光源衰减进行了整合和统一
@@ -11,7 +10,7 @@ float3 IncomingLight (Surface surface, Light light) {
 
 		// brdf中，Cos角度， 吸收率， 以及这个遮挡情况都会影响 brdf系数
 		// 当下：
-		saturate(dt * light.attenuation) * light.color;
+		return saturate(dt * light.attenuation) * light.color;
 }
 
 // 这里使用来pbr的brdf的公式计算光照

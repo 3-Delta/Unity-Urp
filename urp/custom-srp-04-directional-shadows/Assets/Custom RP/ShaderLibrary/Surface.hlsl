@@ -11,7 +11,8 @@ struct Surface {
 
 	// 新增
 	float3 position;  // ws
-	float depth; // 线性z
+	float depth; // 线性z， depth存在的意义就是：maxShadowDistance和最后一级的cullSphere存在冲突问题，sphere超过了max，导致在max之外sphere之内的frag的阴影
+	// 计算存在问题
 	float dither;
 };
 

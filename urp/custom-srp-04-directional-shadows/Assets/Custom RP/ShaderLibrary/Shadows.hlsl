@@ -64,13 +64,22 @@ ShadowData GetShadowData_ (Surface surfaceWS) {
 			break;
 		}
 	}
+
+	// 最后一级的cullphere中包含但是 超过maxShadowDistance 的frag
+	// 此时strength 不能直接 == 0，需要fade, 否则很突兀
+	data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;
+
+	// 如果直接frag超过了最后一级的cullSphere的范围，说明肯定超过了maxSHadowDistance，所以strength == 0即可。
 }
 
 // lighting中获取shadowmap应该使用哪个级联
 ShadowData GetShadowData (Surface surfaceWS) {
 	ShadowData data;
 	data.cascadeBlend = 1.0;
+
 	// maxdistance的渐变是正常的长度渐变
+	// _ShadowDistanceFade.x == 1 / maxShadowDistance
+	// _ShadowDistanceFade.y == 1 / distanceFade
 	data.strength = FadedShadowStrength(surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y);
 	int i;
 	// 判断当前frag在cullSphere的哪一级别的级联中
@@ -82,6 +91,7 @@ ShadowData GetShadowData (Surface surfaceWS) {
 		    // 在球体内
 		    // 级联渐变是 平方的渐变
 			float fade = FadedShadowStrength(distanceSqr, _CascadeData[i].x, _ShadowDistanceFade.z);
+			// 在 最后一个cullSphere中
 			if (i == _CascadeCount - 1) {
 				data.strength *= fade;
 			}
@@ -97,6 +107,7 @@ ShadowData GetShadowData (Surface surfaceWS) {
 	
 	if (i == _CascadeCount) {
 	    // 不在任何cullSphere裁减区域之内
+		// 必定在maxShadowDistance之外的视锥区域里面
 		data.strength = 0.0;
 	}
 	#if defined(_CASCADE_BLEND_DITHER)
