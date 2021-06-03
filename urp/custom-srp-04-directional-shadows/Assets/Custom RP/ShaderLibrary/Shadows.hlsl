@@ -39,6 +39,7 @@ CBUFFER_START(_CustomShadows)
 	float4 _ShadowDistanceFade;
 CBUFFER_END
 
+// shadowData是针对于相机来说的， 具体的说，应该是shadowcascade
 struct ShadowData {
 	int cascadeIndex;
 	float cascadeBlend;
@@ -124,6 +125,7 @@ ShadowData GetShadowData (Surface surfaceWS) {
 	return data;
 }
 
+// DirectionalShadowData是针对每个DirLight来说的， 也就是将来如果有其他的SpotLight之类的，应该也会有类似的结构
 struct DirectionalShadowData {
 	float strength;	 // shadowStrength
 	int tileIndex;

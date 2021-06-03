@@ -203,6 +203,7 @@ public class Shadows {
             buffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
             // 设置depthBias,而不是normalBias
             // 而且是每个光源都会重新设置一次，因为每一个光源light的设置不一样
+            // light.slopeScaleBias其实是个斜率
             buffer.SetGlobalDepthBias(0f, light.slopeScaleBias);
             ExecuteBuffer();
 
