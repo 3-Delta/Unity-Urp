@@ -221,6 +221,7 @@ public class Shadows {
     void SetCascadeData (int cascadeIndex, Vector4 cullingSphere, float tileSize) {
         float texelSize = 2f * cullingSphere.w / tileSize;
         float filterSize = texelSize * ((float)settings.directional.filter + 1f);
+        // 因为不同的pcf情况下，会存在seldshadow, 所以这里需要考虑filterSize
         cullingSphere.w -= filterSize;
         // 保留球体 r半径平方
         cullingSphere.w *= cullingSphere.w;

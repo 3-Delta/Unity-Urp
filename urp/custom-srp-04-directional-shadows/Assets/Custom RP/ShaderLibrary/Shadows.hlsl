@@ -68,7 +68,7 @@ ShadowData GetShadowData_ (Surface surfaceWS) {
 
 	// 最后一级的cullphere中包含但是 超过maxShadowDistance 的frag
 	// 此时strength 不能直接 == 0，需要fade, 否则很突兀
-	data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;
+	// data.strength = surfaceWS.depth < _ShadowDistance ? 1.0 : 0.0;
 
 	// 如果直接frag超过了最后一级的cullSphere的范围，说明肯定超过了maxSHadowDistance，所以strength == 0即可。
 }
