@@ -8,7 +8,8 @@ float3 IncomingLight (Surface surface, Light light) {
 }
 
 float3 GetLighting (Surface surface, BRDF brdf, Light light) {
-	return IncomingLight(surface, light) * DirectBRDF(surface, brdf, light);
+	float3 diffuseAndSpecular = DirectBRDF(surface, brdf, light);
+	return IncomingLight(surface, light) * diffuseAndSpecular;
 }
 
 float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
@@ -18,7 +19,7 @@ float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
 	// 可以单纯测试gi：
 	//float3 color = gi.diffuse;
 
-	// 有了GI：
+	// 有了GI： gi只能影响diffuse，不能影响specular
 	float3 color = gi.diffuse * brdf.diffuse;
 	// 如果都是bake类型的光源，则这里没有任何光源的计算
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {

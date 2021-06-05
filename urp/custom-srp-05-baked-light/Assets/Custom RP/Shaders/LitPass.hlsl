@@ -66,7 +66,7 @@ float4 LitPassFragment (Varyings input) : SV_TARGET {
 	#endif
 
 	// 添加关于gi的计算
-	// float2 lightMapUV = input.lightMapUV
+	// ##define GI_FRAGMENT_DATA(input) input.lightMapUV 相当于 float2 lightMapUV = input.lightMapUV
 	float2 lightMapUV = GI_FRAGMENT_DATA(input);
 	GI gi = GetGI(lightMapUV, surface);
 	// GetLighting会考虑到内部光源格式，如果都是bake类型的光源，则不会进行实质的光源计算
