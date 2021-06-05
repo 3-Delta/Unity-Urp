@@ -10,6 +10,7 @@ struct BRDF {
 // 物体反射的辐射能量占总辐射能量的百分比，称为反射率,总是 < 1
 // https://zhuanlan.zhihu.com/p/335664226
 // https://zhuanlan.zhihu.com/p/372984872
+// https://zhuanlan.zhihu.com/p/54118959
 // 自然界的物质根据光照特性大体可以分为金属和非金属。
 /*
 * 总光照 = 漫反射 + 高光反射 + 吸收， 也就涉及到 高光反射率， 漫反射率
@@ -20,18 +21,17 @@ struct BRDF {
 
 金属：漫反射率 = 0，漫反射颜色 = 黑，高光反射率 = reflctivity，高光颜色 = 自身颜色
 
-非金属的光照特性是：高光反射率在4 % 左右（高光颜色几乎为黑色0），而漫反射很强，漫反射颜色 = （1 - reflctivity） * albedo，其中1 - reflctivity 
-等于“漫反射 + 吸收”的光照比例，再乘以diffuse后就是漫反射颜色。
+非金属的光照特性是：高光反射率在4 % 左右（高光颜色几乎为黑色0），而漫反射很强，漫反射颜色 = （1 - reflctivity） * albedo，
+其中1 - reflctivity == “漫反射 + 吸收”的光照比例，再乘以diffuse后就是漫反射颜色。
 
 非金属：漫反射率 = 1 - reflctivity，漫反射颜色 = 自身颜色，高光反射率 = 0.04，高光颜色 = 灰黑		
 */
 // 非金属的反射率有所不同，但平均约为0.04
+// reflctivity就是高光反射率
 #define MIN_REFLECTIVITY 0.04
 
 // 反射率是指接收光的时候，有多少比例的光被反射，比如黑色的东西反射率就是0也就是不反射都是吸收了
-// 所以这里有一个最小反射率
-// 越靠近金属，ret越小
-// 这里计算的其实就是漫反射率
+// 这里计算的其实就是“漫反射 + 吸收”的光照比例
 // https://zhuanlan.zhihu.com/p/335664226  非金属的反射率有所不同，但平均约为0.04
 // 该函数将范围从0~1调整为0~0.96
 float OneMinusReflectivity (float metallic) {
@@ -42,9 +42,9 @@ float OneMinusReflectivity (float metallic) {
 	// 如果metallic == 0？也就是纯非金属，那么ret = 0.96
 	// 
 	// 如果metallic == 1，也就是纯金属，那么高光反射率就是 1
-	// 如果metallic == 0，也就是非金属，那么高光反射率就是MIN_REFLECTIVITY
+	// 如果metallic == 0，也就是非金属，那么高光反射率就是 MIN_REFLECTIVITY == 0.04
 	// 
-	// 	   金属没有漫反射率，但是非金属有高光反射率
+	// 	金属没有漫反射率，但是非金属有高光反射率
 	// 
 	// (1 - metallic)得到一个趋向于非金属的数据，一般来说就是漫反射
 	return range - metallic * range;
@@ -52,12 +52,13 @@ float OneMinusReflectivity (float metallic) {
 
 BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	BRDF brdf;
-	// 漫反射率
+	// 漫反射率 + 吸收率， 这里怎么没有删除吸收的能量呢？
 	float oneMinusReflectivity = OneMinusReflectivity(surface.metallic);
 
 	// 处理surface漫反射
 	// 原始为：surface.color * （1 - surface.metallic）
 	// 现在为  surface.color * 【（1.0 - MIN_REFLECTIVITY）* (1 - metallic)】
+	// 范围为：surface.color * (0.96, 0), 也就是 0.96color ~ 0
 	// 也就是原始认为：MIN_REFLECTIVITY就是0，最小高光反射率为0，但是其实最小高光反射率不为0为0.04
 	brdf.diffuse = surface.color * oneMinusReflectivity;
 	// 预乘只针对于漫反射，不针对高光反射
@@ -71,6 +72,11 @@ BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	// 如果metallic == 1，也就是纯金属，那么高光反射率就是 1
 	// 如果metallic == 0，也就是非金属，那么高光反射率就是MIN_REFLECTIVITY
 	brdf.specular = lerp(MIN_REFLECTIVITY, 1 * surface.color, surface.metallic);
+
+	// 上述计算下来，法线能量也没有守恒啊, 吸收比率被忽略了  
+	// 漫反射	非金属：0.96SurfColor, 金属：0
+	// 高光反射	非金属：0.04，   金属：SurfColor
+	// 吸收  被忽略
 
 	// smoothness -> roughness
 	float perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);

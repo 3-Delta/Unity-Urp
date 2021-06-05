@@ -11,9 +11,13 @@ float3 IncomingLight (Surface surface, Light light) {
 // 涉及到brdf, 入射光，表面属性
 // 单个光源对于pixel的影响
 float3 GetLighting (Surface surface, BRDF brdf, Light light) {
+	// 先考虑light和surface的关系
 	float3 il = IncomingLight(surface, light);
+
+	// 接着计算surface和brdf的关系
 	// 输入光源 * brdf系数
-	return il * DirectBRDF(surface, brdf, light);
+	float3 diffuseAndSpecular = DirectBRDF(surface, brdf, light);
+	return il * diffuseAndSpecular;
 }
 
 // 光照计算入口
@@ -21,7 +25,8 @@ float3 GetLighting (Surface surface, BRDF brdf, Light light) {
 float3 GetLighting (Surface surface, BRDF brdf) {
 	float3 color = 0.0;
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {
-		color += GetLighting(surface, brdf, GetDirectionalLight(i));
+		Light light = GetDirectionalLight(i);
+		color += GetLighting(surface, brdf, light);
 	}
 	return color;
 }
