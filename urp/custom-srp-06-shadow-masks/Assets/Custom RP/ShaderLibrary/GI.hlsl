@@ -3,14 +3,17 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 
+// lightmap
 TEXTURE2D(unity_Lightmap);
 SAMPLER(samplerunity_Lightmap);
 
-TEXTURE2D(unity_ShadowMask);
-SAMPLER(samplerunity_ShadowMask);
-
+// lppv
 TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
 SAMPLER(samplerunity_ProbeVolumeSH);
+
+// 新增shadowmask
+TEXTURE2D(unity_ShadowMask);
+SAMPLER(samplerunity_ShadowMask);
 
 #if defined(LIGHTMAP_ON)
     #define GI_ATTRIBUTE_DATA float2 lightMapUV : TEXCOORD1;
@@ -27,8 +30,10 @@ SAMPLER(samplerunity_ProbeVolumeSH);
 #endif
 
 struct GI {
-    float3 diffuse;
-    ShadowMask shadowMask;
+    float3 diffuse; // 漫反射
+
+    // 新增
+    ShadowMask shadowMask;  // 阴影
 };
 
 float3 SampleLightMap (float2 lightMapUV) {
@@ -75,11 +80,13 @@ float3 SampleLightProbe (Surface surfaceWS) {
     #endif
 }
 
+// 动态物体的shadowmask遮挡信息
 float4 SampleLightProbeOcclusion (Surface surfaceWS) {
     return unity_ProbesOcclusion;
 }
 
-
+// 进入这个函数，说明现在是在shadowmask模式下，此时要么从shadowmask中采样 给静态物体，
+// 要么从lppv或者occlusionprobo中采样 给动态物体
 float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
     #if defined(LIGHTMAP_ON)
         // 静态物体
@@ -88,7 +95,8 @@ float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
         );
     #else
         // 动态物体，比如scene中的球体
-        if (unity_ProbeVolumeParams.x) { // for LPPV
+        // for LPPV
+        if (unity_ProbeVolumeParams.x) {
             return SampleProbeOcclusion(
                 TEXTURE3D_ARGS(unity_ProbeVolumeSH, samplerunity_ProbeVolumeSH),
                 surfaceWS.position, unity_ProbeVolumeWorldToObject,
@@ -97,6 +105,7 @@ float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
             );
         }
         else {
+            // 动态球受到的静态物体的shadow影响
             return unity_ProbesOcclusion;
         }
     #endif

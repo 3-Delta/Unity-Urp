@@ -23,8 +23,7 @@ int GetDirectionalLightCount () {
 DirectionalShadowData GetDirectionalShadowData (int lightIndex, ShadowData shadowData) {
 	DirectionalShadowData data;
 	data.strength = _DirectionalLightShadowData[lightIndex].x;
-	data.tileIndex =
-		_DirectionalLightShadowData[lightIndex].y + shadowData.cascadeIndex;
+	data.tileIndex = _DirectionalLightShadowData[lightIndex].y + shadowData.cascadeIndex;
 	data.normalBias = _DirectionalLightShadowData[lightIndex].z;
 	// 多个光源的shadowmask因为共用一个shadowmask,所以需要区分哪个光源使用mask的哪个channel
 	// c#端传入
@@ -36,6 +35,7 @@ Light GetDirectionalLight (int index, Surface surfaceWS, ShadowData shadowData) 
 	Light light;
 	light.color = _DirectionalLightColors[index].rgb;
 	light.direction = _DirectionalLightDirections[index].xyz;
+
 	DirectionalShadowData dirShadowData = GetDirectionalShadowData(index, shadowData);
 	light.attenuation = GetDirectionalShadowAttenuation(dirShadowData, shadowData, surfaceWS);
 	return light;

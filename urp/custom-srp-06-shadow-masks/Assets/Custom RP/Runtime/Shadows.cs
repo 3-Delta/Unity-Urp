@@ -87,6 +87,7 @@ public class Shadows {
             LightBakingOutput lightBaking = light.bakingOutput;
             if (
                 // 此种情况下，存在shadowmask
+                // 也就是说，只有在Mixed模式，同时为shadowmask情况下，才会有shadowmask使用
                 lightBaking.lightmapBakeType == LightmapBakeType.Mixed &&
                 lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
             ) {

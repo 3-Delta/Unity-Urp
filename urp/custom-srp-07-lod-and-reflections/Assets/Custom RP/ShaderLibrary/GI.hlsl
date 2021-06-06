@@ -13,6 +13,7 @@ SAMPLER(samplerunity_ShadowMask);
 TEXTURE3D_FLOAT(unity_ProbeVolumeSH);
 SAMPLER(samplerunity_ProbeVolumeSH);
 
+// 新增:环境map, 默认是天空盒， 也有可能是ReflectionProbo, 从FrameDebugger可观察到
 TEXTURECUBE(unity_SpecCube0);
 SAMPLER(samplerunity_SpecCube0);
 
@@ -32,10 +33,14 @@ SAMPLER(samplerunity_SpecCube0);
 
 struct GI {
 	float3 diffuse;
+
+	// 新增 ， 主要是为了反射， 而且反射肯定是高光产生的
 	float3 specular;
+
 	ShadowMask shadowMask;
 };
 
+// lightmap 静态
 float3 SampleLightMap (float2 lightMapUV) {
 	#if defined(LIGHTMAP_ON)
   		return SampleSingleLightmap(
@@ -53,6 +58,7 @@ float3 SampleLightMap (float2 lightMapUV) {
 	#endif
 }
 
+// lightProbo 动态
 float3 SampleLightProbe (Surface surfaceWS) {
 	#if defined(LIGHTMAP_ON)
 		return 0.0;
@@ -80,11 +86,13 @@ float3 SampleLightProbe (Surface surfaceWS) {
 	#endif
 }
 
+// 动态物体的接收静态物体的shadowmask，来自occlusionProbo
 float4 SampleLightProbeOcclusion (Surface surfaceWS) {
 	return unity_ProbesOcclusion;
 }
 
 
+// shadowmask 动态受到静态 + 静态
 float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
 	#if defined(LIGHTMAP_ON)
 		return SAMPLE_TEXTURE2D(
@@ -105,19 +113,21 @@ float4 SampleBakedShadows (float2 lightMapUV, Surface surfaceWS) {
 	#endif
 }
 
+// 反射图
 float3 SampleEnvironment (Surface surfaceWS, BRDF brdf) {
-	float3 uvw = reflect(-surfaceWS.viewDirection, surfaceWS.normal);
+	float3 refl = reflect(-surfaceWS.viewDirection, surfaceWS.normal);
 	float mip = PerceptualRoughnessToMipmapLevel(brdf.perceptualRoughness);
-	float4 environment = SAMPLE_TEXTURECUBE_LOD(
-		unity_SpecCube0, samplerunity_SpecCube0, uvw, mip
-	);
+	float4 environment = SAMPLE_TEXTURECUBE_LOD(unity_SpecCube0, samplerunity_SpecCube0, refl, mip);
 	return DecodeHDREnvironment(environment, unity_SpecCube0_HDR);
 }
 
 GI GetGI (float2 lightMapUV, Surface surfaceWS, BRDF brdf) {
 	GI gi;
+	// 漫反射
 	gi.diffuse = SampleLightMap(lightMapUV) + SampleLightProbe(surfaceWS);
+	// 高光的镜面反射
 	gi.specular = SampleEnvironment(surfaceWS, brdf);
+
 	gi.shadowMask.always = false;
 	gi.shadowMask.distance = false;
 	gi.shadowMask.shadows = 1.0;

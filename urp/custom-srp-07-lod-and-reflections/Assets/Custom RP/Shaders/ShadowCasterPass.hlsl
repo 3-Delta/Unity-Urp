@@ -34,6 +34,7 @@ Varyings ShadowCasterPassVertex (Attributes input) {
 
 void ShadowCasterPassFragment (Varyings input) {
 	UNITY_SETUP_INSTANCE_ID(input);
+	// 也需要处理lod, 因为lod处理中有进行clip操作
 	ClipLOD(input.positionCS.xy, unity_LODFade.x);
 
 	float4 base = GetBase(input.baseUV);

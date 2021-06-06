@@ -8,7 +8,7 @@ CBUFFER_START(UnityPerDraw)
 	real4 unity_WorldTransformParams;
 
 	float4 unity_ProbesOcclusion;
-	
+	// 新增
 	float4 unity_SpecCube0_HDR;
 	
 	float4 unity_LightmapST;

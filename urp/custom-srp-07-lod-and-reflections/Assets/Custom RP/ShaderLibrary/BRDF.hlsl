@@ -26,10 +26,10 @@ BRDF GetBRDF (Surface surface, bool applyAlphaToDiffuse = false) {
 	}
 	brdf.specular = lerp(MIN_REFLECTIVITY, surface.color, surface.metallic);
 
-	brdf.perceptualRoughness =
-		PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
+	brdf.perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(surface.smoothness);
 	brdf.roughness = PerceptualRoughnessToRoughness(brdf.perceptualRoughness);
 	
+	// 新增
 	brdf.fresnel = saturate(surface.smoothness + 1.0 - oneMinusReflectivity);
 	return brdf;
 }
@@ -44,19 +44,23 @@ float SpecularStrength (Surface surface, BRDF brdf, Light light) {
 	return r2 / (d2 * max(0.1, lh2) * normalization);
 }
 
+// 直接光BRDF
 float3 DirectBRDF (Surface surface, BRDF brdf, Light light) {
 	return SpecularStrength(surface, brdf, light) * brdf.specular + brdf.diffuse;
 }
 
-float3 IndirectBRDF (
-	Surface surface, BRDF brdf, float3 diffuse, float3 specular
-) {
-	float fresnelStrength = surface.fresnelStrength *
-		Pow4(1.0 - saturate(dot(surface.normal, surface.viewDirection)));
-	float3 reflection =
-		specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
+// 间接光BRDF
+// 反射肯定是属于间接光的，直接光不可能产生反射现象
+float3 IndirectBRDF (Surface surface, BRDF brdf, float3 diffuse, float3 specular) {
+	// 原始：return diffuse * brdf.diffuse;
+
+	float fresnelStrength = surface.fresnelStrength * Pow4(1.0 - saturate(dot(surface.normal, surface.viewDirection)));
+	float3 reflection = specular * lerp(brdf.specular, brdf.fresnel, fresnelStrength);
+
+	// 测试代码
+	//reflection = specular * brdf.specular;
+
 	reflection /= brdf.roughness * brdf.roughness + 1.0;
-	
     return diffuse * brdf.diffuse + reflection;
 }
 

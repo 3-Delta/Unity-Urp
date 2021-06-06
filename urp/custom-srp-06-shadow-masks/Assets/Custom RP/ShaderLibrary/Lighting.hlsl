@@ -13,9 +13,13 @@ float3 GetLighting (Surface surface, BRDF brdf, Light light) {
 
 float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
 	ShadowData shadowData = GetShadowData(surfaceWS);
+
+	// gi的shadowmask
 	shadowData.shadowMask = gi.shadowMask;
 	
+	// gi的漫反射中影响漫反射
 	float3 color = gi.diffuse * brdf.diffuse;
+
 	for (int i = 0; i < GetDirectionalLightCount(); i++) {
 		Light light = GetDirectionalLight(i, surfaceWS, shadowData);
 		color += GetLighting(surfaceWS, brdf, light);

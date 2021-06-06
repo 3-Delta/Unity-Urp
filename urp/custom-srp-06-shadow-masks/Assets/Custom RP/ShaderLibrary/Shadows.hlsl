@@ -34,7 +34,7 @@ CBUFFER_END
 struct ShadowMask {
 	bool always;
 	bool distance;
-	float4 shadows;
+	float4 shadows;	// rgba4个channel存储4个光源的shadow
 };
 
 float GetBakedShadow (ShadowMask mask, int channel) {
@@ -56,26 +56,30 @@ float GetBakedShadow (ShadowMask mask, int channel, float strength) {
 	return 1.0;
 }
 
+// 所有光源的阴影
 struct ShadowData {
 	int cascadeIndex;
 	float cascadeBlend;
 	float strength;
+
+	// 新增 shadowmask 
 	ShadowMask shadowMask;
 };
 
-// shadowmask的静态阴影和shadpwmap的动态阴影混合，这样子可以实现：maxShadowSistance之外显示阴影
-float MixBakedAndRealtimeShadows (ShadowData global, float shadow, int shadowMaskChannel, float strength) {
+// shadowmask的静态阴影和shadpwmap的动态阴影混合，这样子可以实现：maxShadowSistance之外显示烘培阴影
+float MixBakedAndRealtimeShadows (ShadowData global, float realTimeShadow, int shadowMaskChannel, float strength) {
 	float baked = GetBakedShadow(global.shadowMask, shadowMaskChannel);
 	if (global.shadowMask.always) {
-		shadow = lerp(1.0, shadow, global.strength);
-		shadow = min(baked, shadow);
-		return lerp(1.0, shadow, strength);
+		realTimeShadow = lerp(1.0, realTimeShadow, global.strength);
+		// always下，只是检验来一下min,没有雨bake记性fade
+		realTimeShadow = min(baked, realTimeShadow);
+		return lerp(1.0, realTimeShadow, strength);
 	}
 	if (global.shadowMask.distance) {
-		shadow = lerp(baked, shadow, global.strength);
-		return lerp(1.0, shadow, strength);
+		realTimeShadow = lerp(baked, realTimeShadow, global.strength);
+		return lerp(1.0, realTimeShadow, strength);
 	}
-	return lerp(1.0, shadow, strength * global.strength);
+	return lerp(1.0, realTimeShadow, strength * global.strength);
 }
 
 float FadedShadowStrength (float distance, float scale, float fade) {
@@ -87,6 +91,7 @@ ShadowData GetShadowData (Surface surfaceWS) {
 	data.shadowMask.always = false;
 	data.shadowMask.distance = false;
 	data.shadowMask.shadows = 1.0;
+
 	data.cascadeBlend = 1.0;
 	data.strength = FadedShadowStrength(
 		surfaceWS.depth, _ShadowDistanceFade.x, _ShadowDistanceFade.y
@@ -124,10 +129,13 @@ ShadowData GetShadowData (Surface surfaceWS) {
 	return data;
 }
 
+// 单个平行光的阴影数据
 struct DirectionalShadowData {
 	float strength;
 	int tileIndex;
 	float normalBias;
+
+	// 新增
 	int shadowMaskChannel;
 };
 
@@ -178,13 +186,15 @@ float GetCascadedShadow (DirectionalShadowData directional, ShadowData global, S
 	return shadow;
 }
 
+// shadow入口函数
 float GetDirectionalShadowAttenuation(DirectionalShadowData directional, ShadowData global, Surface surfaceWS) {
+	// frag不接受阴影，就表现brdf下正常颜色，所以衰减为1
 	#if !defined(_RECEIVE_SHADOWS)
 		return 1.0;
 	#endif
 
 	float shadow;
-	// 没有实时阴影
+	// 没有实时阴影，自然也就不需要cascade之间的阴影进行fade
 	if (directional.strength * global.strength <= 0.0) {
 		shadow = GetBakedShadow(global.shadowMask, directional.shadowMaskChannel, abs(directional.strength));
 	}
