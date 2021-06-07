@@ -41,9 +41,7 @@ Varyings LitPassVertex (Attributes input) {
 	output.positionCS = TransformWorldToHClip(output.positionWS);
 	output.normalWS = TransformObjectToWorldNormal(input.normalOS);
 	#if defined(_NORMAL_MAP)
-		output.tangentWS = float4(
-			TransformObjectToWorldDir(input.tangentOS.xyz), input.tangentOS.w
-		);
+		output.tangentWS = float4(TransformObjectToWorldDir(input.tangentOS.xyz), input.tangentOS.w);
 	#endif
 	output.baseUV = TransformBaseUV(input.baseUV);
 	#if defined(_DETAIL_MAP)

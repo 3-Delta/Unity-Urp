@@ -22,6 +22,12 @@ float3 GetLighting (Surface surfaceWS, BRDF brdf, GI gi) {
 		color += GetLighting(surfaceWS, brdf, light);
 	}
 
+	// 为什么存在逐对象光源呢？
+	// 如果不考虑的话，那么每个frag都需要计算一下每个光源对于这个frag的影响，但是这其实没必要，因为有些光源可见但是完全没有影响到
+	// 某些obj, 所以我们可以大胆的将不影响obj的光源剔除， 也就是默认某个frag收到GetOtherLightCount() + GetDirectionalLightCount()个光源
+	// 影响，但是过滤之后， 只有GetDirectionalLightCount()	 + 少数一些OtherLight的影响
+	// 影响某个obj的可见非平行光在unity_LightIndices中定义， 也就是UnityInput.hlsl中的UnityPerDraw中
+	
 	// 非平行光
 	#if defined(_LIGHTS_PER_OBJECT)
 	// 因为不能对于每一个片源得到哪些光源影响该片源，所以只能放大过滤范围得到这个obj受到哪些光源的影响

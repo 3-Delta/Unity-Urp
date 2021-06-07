@@ -7,6 +7,7 @@ CBUFFER_START(UnityPerDraw)
 	float4 unity_LODFade;
 	real4 unity_WorldTransformParams;
 
+	// 新增：非平行光配置
 	real4 unity_LightData;
 	real4 unity_LightIndices[2];
 

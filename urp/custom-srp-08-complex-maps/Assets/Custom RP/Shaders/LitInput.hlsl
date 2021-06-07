@@ -5,7 +5,6 @@ TEXTURE2D(_BaseMap);
 TEXTURE2D(_MaskMap);
 TEXTURE2D(_NormalMap);
 TEXTURE2D(_EmissionMap);
-
 // 采样器
 SAMPLER(sampler_BaseMap);
 
@@ -36,6 +35,7 @@ UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 struct InputConfig {
 	float2 baseUV;
 	float2 detailUV;
+
 	bool useMask;
 	bool useDetail;
 };

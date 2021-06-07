@@ -124,10 +124,7 @@ public class Shadows {
 				lightBaking.mixedLightingMode == MixedLightingMode.Shadowmask
 			) {
 				useShadowMask = true;
-				return new Vector4(
-					light.shadowStrength, 0f, 0f,
-					lightBaking.occlusionMaskChannel
-				);
+				return new Vector4(light.shadowStrength, 0f, 0f, lightBaking.occlusionMaskChannel);
 			}
 
 		}
@@ -144,6 +141,7 @@ public class Shadows {
 				32, FilterMode.Bilinear, RenderTextureFormat.Shadowmap
 			);
 		}
+
 		buffer.BeginSample(bufferName);
 		SetKeywords(shadowMaskKeywords, useShadowMask ?
 			QualitySettings.shadowmaskMode == ShadowmaskMode.Shadowmask ? 0 : 1 :

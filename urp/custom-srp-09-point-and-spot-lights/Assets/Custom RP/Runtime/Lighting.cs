@@ -13,9 +13,9 @@ public class Lighting {
 	static int
 		dirLightCountId = Shader.PropertyToID("_DirectionalLightCount"),
 		dirLightColorsId = Shader.PropertyToID("_DirectionalLightColors"),
+		// 平行光没有位置，只有方向
 		dirLightDirectionsId = Shader.PropertyToID("_DirectionalLightDirections"),
-		dirLightShadowDataId =
-			Shader.PropertyToID("_DirectionalLightShadowData");
+		dirLightShadowDataId = Shader.PropertyToID("_DirectionalLightShadowData");
 
 	static Vector4[]
 		dirLightColors = new Vector4[maxDirLightCount],
@@ -25,8 +25,11 @@ public class Lighting {
 	static int
 		otherLightCountId = Shader.PropertyToID("_OtherLightCount"),
 		otherLightColorsId = Shader.PropertyToID("_OtherLightColors"),
+		// 点光源有位置，聚光灯有位置
 		otherLightPositionsId = Shader.PropertyToID("_OtherLightPositions"),
+		// 聚光灯有方向
 		otherLightDirectionsId = Shader.PropertyToID("_OtherLightDirections"),
+		// 聚光灯有角度
 		otherLightSpotAnglesId = Shader.PropertyToID("_OtherLightSpotAngles"),
 		otherLightShadowDataId = Shader.PropertyToID("_OtherLightShadowData");
 
@@ -64,8 +67,7 @@ public class Lighting {
 	}
 
 	void SetupLights (bool useLightsPerObject) {
-		NativeArray<int> indexMap = useLightsPerObject ?
-			cullingResults.GetLightIndexMap(Allocator.Temp) : default;
+		NativeArray<int> indexMap = useLightsPerObject ? cullingResults.GetLightIndexMap(Allocator.Temp) : default;
 		NativeArray<VisibleLight> visibleLights = cullingResults.visibleLights;
 		int dirLightCount = 0, otherLightCount = 0;
 		int i;
@@ -135,41 +137,56 @@ public class Lighting {
 
 	void SetupDirectionalLight (int index, ref VisibleLight visibleLight) {
 		dirLightColors[index] = visibleLight.finalColor;
+
 		// 平行光影响所有obj，而且没有位置，只有方向，所以这里是2，也就是forward,也就是z方向
 		dirLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
-		dirLightShadowData[index] =
-			shadows.ReserveDirectionalShadows(visibleLight.light, index);
+
+		// 阴影
+		dirLightShadowData[index] = shadows.ReserveDirectionalShadows(visibleLight.light, index);
+
+		// 没有位置， 角度， 衰减， 只有方向
 	}
 
 	void SetupPointLight (int index, ref VisibleLight visibleLight) {
 		otherLightColors[index] = visibleLight.finalColor;
+
 		// 点光源有位置，方向是360辐射，所以这里需要明确位置，方便计算surface到光源的方向
 		Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
-		position.w =
-			1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+		// 1/R^2 强度 衰减
+		position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+
 		otherLightPositions[index] = position;
+
+		// 设置，不受到聚光计算影响
 		otherLightSpotAngles[index] = new Vector4(0f, 1f);
+
+		// 阴影
 		Light light = visibleLight.light;
 		otherLightShadowData[index] = shadows.ReserveOtherShadows(light, index);
+
+		// 没有 角度
 	}
 
 	void SetupSpotLight (int index, ref VisibleLight visibleLight) {
 		otherLightColors[index] = visibleLight.finalColor;
+
 		// 聚光灯是一个有固定的锥形方向辐射的点光源，所以需要计算surface到光源位置的方向是否在辐射角度范围之内，计算使用dot计算
 		Vector4 position = visibleLight.localToWorldMatrix.GetColumn(3);
-		position.w =
-			1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
+		// 1/R^2 强度 衰减
+		position.w = 1f / Mathf.Max(visibleLight.range * visibleLight.range, 0.00001f);
 		otherLightPositions[index] = position;
-		otherLightDirections[index] =
-			-visibleLight.localToWorldMatrix.GetColumn(2);
 
+		// 聚光灯方向
+		otherLightDirections[index] = -visibleLight.localToWorldMatrix.GetColumn(2);
+
+		// 聚光灯角度
 		Light light = visibleLight.light;
 		float innerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * light.innerSpotAngle);
 		float outerCos = Mathf.Cos(Mathf.Deg2Rad * 0.5f * visibleLight.spotAngle);
 		float angleRangeInv = 1f / Mathf.Max(innerCos - outerCos, 0.001f);
-		otherLightSpotAngles[index] = new Vector4(
-			angleRangeInv, -outerCos * angleRangeInv
-		);
+		otherLightSpotAngles[index] = new Vector4(angleRangeInv, -outerCos * angleRangeInv);
+
+		// 阴影
 		otherLightShadowData[index] = shadows.ReserveOtherShadows(light, index);
 	}
 }
