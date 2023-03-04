@@ -23,11 +23,15 @@ public class CustomRenderPipeline : RenderPipeline {
 	protected override void Render (
 		ScriptableRenderContext context, Camera[] cameras
 	) {
+		BeginFrameRendering(context, cameras);
 		foreach (Camera camera in cameras) {
+			BeginCameraRendering(context, camera);
 			renderer.Render(
 				context, camera, useDynamicBatching, useGPUInstancing,
 				shadowSettings
 			);
+			EndCameraRendering(context, camera);
 		}
+		EndFrameRendering(context, cameras);
 	}
 }
