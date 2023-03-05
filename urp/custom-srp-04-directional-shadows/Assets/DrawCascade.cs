@@ -13,6 +13,11 @@ public class DrawCascade : MonoBehaviour {
     private ScriptableRenderContext context;
     private CullingResults cullingResults;
 
+    public Color adjust = new Color(1f, 1f, 1f, 0.5f);
+    public Color[] colors = new Color[] { 
+        Color.red, Color.green, Color.blue, Color.black
+    };
+
     private int countPerLine;
     private int tileSize;
     private bool hasInitContext = false;
@@ -21,6 +26,11 @@ public class DrawCascade : MonoBehaviour {
         int tileCount = shadowSettings.directional.cascadeCount;
         countPerLine = tileCount <= 1 ? 1 : tileCount <= 4 ? 2 : 4;
         tileSize = (int) shadowSettings.directional.atlasSize / countPerLine;
+
+        for (int i = 0; i < colors.Length; i++)
+        {
+            colors[i] *= adjust;
+        }
         
         hasInitContext = false;
         RenderPipelineManager.beginCameraRendering += OnBeginCameraRender;
@@ -67,9 +77,28 @@ public class DrawCascade : MonoBehaviour {
                     out Matrix4x4 viewMatrix, out Matrix4x4 projMatrix, out ShadowSplitData splitData);
 
                 var sphere = splitData.cullingSphere;
-                var nearPlane = cullingParams.GetCullingPlane(i);
-                Gizmos.DrawWireSphere(sphere, sphere.w);
-                Gizmos.DrawFrustum(cam.transform.position, cam.fieldOfView, nearPlane.distance, cam.nearClipPlane, cam.aspect);
+                var farPlane = cullingParams.GetCullingPlane(i);
+
+                // 绘制裁剪球
+                var oldColor = Gizmos.color;
+                Gizmos.color = colors[i];
+                Gizmos.DrawSphere(sphere, sphere.w);
+                Gizmos.color = oldColor;
+
+                // 绘制相机整个视锥体
+                UnityEditor.CameraEditorUtils.DrawFrustumGizmo(cam);
+
+                // 绘制相机cascade视锥体
+                oldColor = Gizmos.color;
+                var oldFar = cam.farClipPlane;
+                Gizmos.color = Color.cyan;
+                cam.farClipPlane *= (i < cascadeCount - 1 ? shadowSettings.directional.CascadeRatios[i] : 1f);
+                UnityEditor.CameraEditorUtils.DrawFrustumGizmo(cam);
+                Gizmos.color = oldColor;
+                cam.farClipPlane = oldFar;
+
+                // 如何利用计算出来的viewMatrix进行绘制呢?
+                //Gizmos.DrawFrustum(cam.transform.position, cam.fieldOfView, farPlane.distance, cam.nearClipPlane, cam.aspect);
             }
         }
     }
